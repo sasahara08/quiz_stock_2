@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(npm test *)",
+      "Bash(npx shadcn@latest init --help)",
+      "Bash(npx shadcn@latest add --help)",
+      "Bash(Remove-Item \"modules\\\\quiz-generation\\\\actions\\\\create-quizzes.ts\")",
+      "Bash(Remove-Item \"modules\\\\quiz-generation\\\\components\\\\generated-quiz-list.tsx\")",
+      "Skill(claude-in-chrome)"
+    ]
+  }
+}
