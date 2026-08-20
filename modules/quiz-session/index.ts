@@ -1,7 +1,7 @@
 // quiz-session モジュールの公開 API
 // 他モジュールや app/ はこのファイルからのみ import する。
-// 具体的な実装（infrastructure）や AttemptStore ポートは公開しない。
-// Attempt の作成は CreateAttemptUseCase を経由すること。
+// 集約（Attempt）そのものは公開しない。挑戦の状態を変えられるのは
+// このモジュール内のユースケースだけ、という境界を保つため。
 export { submitAnswerAction } from "./presentation/submit-answer";
 export { getAttemptForPlay } from "./api/get-attempt-for-play";
 export { getAttemptResult } from "./api/get-attempt-result";
@@ -10,5 +10,5 @@ export { CreateAttemptUseCase } from "./use-cases/create-attempt";
 export type { CreateAttemptInput } from "./use-cases/create-attempt";
 export type { AttemptForPlay } from "./api/get-attempt-for-play";
 export type { AttemptResultData, AttemptResultItem } from "./api/get-attempt-result";
-export type { Attempt, AttemptQuiz, AttemptStatus } from "./domain/entities/attempt";
-export type { Answer } from "./domain/entities/answer";
+export type { AttemptStatus } from "./domain/entities/attempt";
+export type { AttemptQuizData, QuestionForPlay } from "./domain/entities/attempt-quiz";

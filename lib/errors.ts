@@ -9,6 +9,7 @@ export const ErrorCode = {
   ATTEMPT_NOT_FOUND: "ATTEMPT_NOT_FOUND",
   ALREADY_ANSWERED: "ALREADY_ANSWERED",
   ATTEMPT_FINISHED: "ATTEMPT_FINISHED",
+  ATTEMPT_IN_PROGRESS: "ATTEMPT_IN_PROGRESS",
   INTERNAL_ERROR: "INTERNAL_ERROR",
 } as const;
 
@@ -27,6 +28,7 @@ export const errorMessages: Record<ErrorCode, string> = {
   ATTEMPT_NOT_FOUND: "クイズセッションが見つかりません",
   ALREADY_ANSWERED: "この問題にはすでに回答済みです",
   ATTEMPT_FINISHED: "このクイズはすでに終了しています",
+  ATTEMPT_IN_PROGRESS: "このクイズはまだ回答中です",
   INTERNAL_ERROR: "エラーが発生しました。時間をおいて再度お試しください",
 };
 

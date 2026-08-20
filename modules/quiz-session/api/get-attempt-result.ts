@@ -1,6 +1,8 @@
 // RSC 用ヘルパー
-// 結果画面に必要な全データを返す。完了済みの Attempt のみ。
-// 正解・解説をすべて含む（全問回答済みなので安全）。
+// 結果画面に必要な全データを返す。
+// 「完了していなければ振り返りは見られない」「どの回答がどの問題に対応するか」は
+// Attempt.review() が判断するため、ここは画面向けの形に詰め替えるだけ。
+// 完了済みの挑戦のみが対象なので、正解・解説を含めても安全。
 import { container } from "@/lib/container";
 import { GetAttemptUseCase } from "../use-cases/get-attempt";
 
@@ -29,23 +31,23 @@ export function getAttemptResult(id: string): AttemptResultData | null {
   try {
     const getAttempt = container.get(GetAttemptUseCase);
     const attempt = getAttempt.execute(id);
-    if (attempt.status !== "finished") return null;
+    const review = attempt.review();
 
     return {
       id: attempt.id,
-      totalCount: attempt.quizzes.length,
-      score: attempt.score ?? 0,
-      sourceTitle: attempt.sourceTitle,
-      sourceUrl: attempt.sourceUrl,
-      answers: attempt.answers.map((answer) => ({
-        questionIndex: answer.questionIndex,
-        selectedIndex: answer.selectedIndex,
-        isCorrect: answer.isCorrect,
+      totalCount: review.totalCount,
+      score: review.score,
+      sourceTitle: review.sourceTitle,
+      sourceUrl: review.sourceUrl,
+      answers: review.items.map((item) => ({
+        questionIndex: item.questionIndex,
+        selectedIndex: item.selectedIndex,
+        isCorrect: item.isCorrect,
         question: {
-          text: attempt.quizzes[answer.questionIndex].text,
-          choices: attempt.quizzes[answer.questionIndex].choices,
-          answerIndex: attempt.quizzes[answer.questionIndex].answerIndex,
-          explanation: attempt.quizzes[answer.questionIndex].explanation,
+          text: item.quiz.text,
+          choices: [...item.quiz.choices],
+          answerIndex: item.quiz.answerIndex,
+          explanation: item.quiz.explanation,
         },
       })),
     };
