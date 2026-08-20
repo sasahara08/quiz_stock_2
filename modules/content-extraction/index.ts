@@ -7,3 +7,4 @@ export { ExtractContentUseCase } from "./use-cases/extract-content";
 export { contentExtractionContainerModule } from "./container";
 export { CONTENT_EXTRACTION_TYPES } from "./domain/types";
 export type { ExtractedContent } from "./domain/entities/extracted-content";
+export type { ExtractedContentInput } from "./domain/entities/extracted-content";

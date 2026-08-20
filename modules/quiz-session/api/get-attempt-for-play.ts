@@ -1,8 +1,10 @@
 // RSC 用ヘルパー
 // クイズ回答画面に必要なデータを返す。
-// 正解（answerIndex）と解説（explanation）は含めない。回答後のアクション結果で初めて渡す。
+// 出題内容の組み立ては Attempt.currentQuestion が担い、正解（answerIndex）と
+// 解説（explanation）はそもそもここまで渡ってこない。
 import { container } from "@/lib/container";
 import type { AttemptStatus } from "../domain/entities/attempt";
+import type { QuestionForPlay } from "../domain/entities/attempt-quiz";
 import { GetAttemptUseCase } from "../use-cases/get-attempt";
 
 export type AttemptForPlay = {
@@ -10,27 +12,20 @@ export type AttemptForPlay = {
   currentIndex: number;
   totalCount: number;
   status: AttemptStatus;
-  currentQuestion: { text: string; choices: string[] } | null;
+  currentQuestion: QuestionForPlay | null;
 };
 
 export function getAttemptForPlay(id: string): AttemptForPlay | null {
   try {
     const getAttempt = container.get(GetAttemptUseCase);
     const attempt = getAttempt.execute(id);
-    const currentQuestion =
-      attempt.status === "in-progress" && attempt.currentIndex < attempt.quizzes.length
-        ? {
-            text: attempt.quizzes[attempt.currentIndex].text,
-            choices: attempt.quizzes[attempt.currentIndex].choices,
-          }
-        : null;
 
     return {
       id: attempt.id,
       currentIndex: attempt.currentIndex,
-      totalCount: attempt.quizzes.length,
+      totalCount: attempt.totalCount,
       status: attempt.status,
-      currentQuestion,
+      currentQuestion: attempt.currentQuestion,
     };
   } catch {
     return null;

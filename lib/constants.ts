@@ -1,4 +1,5 @@
 export const MIN_CONTENT_LENGTH = 200;
+export const CHOICE_COUNT = 4;
 export const MAX_QUESTION_COUNT = 5;
 export const MIN_QUESTION_COUNT = 1;
 export const DEFAULT_QUESTION_COUNT = 5;
