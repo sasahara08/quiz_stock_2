@@ -7,6 +7,7 @@ import { container } from "@/lib/container";
 import { AppError, errorMessages } from "@/lib/errors";
 import { ExtractContentUseCase } from "@/modules/content-extraction";
 import { CreateAttemptUseCase } from "@/modules/quiz-session";
+import { requireUserOrThrow } from "@/modules/user";
 import { GenerateQuizzesUseCase } from "../use-cases/generate-quizzes";
 import { startGenerationInputSchema } from "../schema";
 
@@ -22,6 +23,8 @@ export async function startGenerationAction(
   }
 
   try {
+    const user = await requireUserOrThrow();
+
     const extractContent = container.get(ExtractContentUseCase);
     const content = await extractContent.execute(parsed.data.url);
 
@@ -30,6 +33,7 @@ export async function startGenerationAction(
 
     const createAttempt = container.get(CreateAttemptUseCase);
     const attempt = createAttempt.execute({
+      ownerId: user.id,
       quizzes,
       sourceTitle: content.title,
       sourceUrl: content.sourceUrl,

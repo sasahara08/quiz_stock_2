@@ -9,6 +9,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // 既定値は lib/prisma.ts と揃えること。ずれると CLI とアプリが別のDBを見てしまう。
+    url: process.env["DATABASE_URL"] ?? "file:./dev.db",
   },
 });

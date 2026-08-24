@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { startGenerationAction } from "@/modules/quiz-generation";
+import { startGenerationAction } from "@/modules/quiz-generation/actions";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { Spinner } from "@/components/molecules/spinner";
@@ -31,7 +31,7 @@ export function GeneratingView({ url }: Props) {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="flex w-full max-w-sm flex-col items-center gap-4 text-center">
           <AlertCircle className="h-10 w-10 text-destructive" />
           <p className="text-sm text-destructive">{error}</p>
@@ -44,7 +44,7 @@ export function GeneratingView({ url }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-[60vh] items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <Spinner label="問題を作成中…" />
         <p className="max-w-xs text-center text-xs text-muted-foreground">

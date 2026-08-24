@@ -11,6 +11,7 @@ import { Container } from "inversify";
 import { contentExtractionContainerModule } from "@/modules/content-extraction/container";
 import { quizGenerationContainerModule } from "@/modules/quiz-generation/container";
 import { quizSessionContainerModule } from "@/modules/quiz-session/container";
+import { userContainerModule } from "@/modules/user/container";
 
 function createContainer(): Container {
   const container = new Container();
@@ -18,6 +19,7 @@ function createContainer(): Container {
     contentExtractionContainerModule,
     quizGenerationContainerModule,
     quizSessionContainerModule,
+    userContainerModule,
   );
   return container;
 }

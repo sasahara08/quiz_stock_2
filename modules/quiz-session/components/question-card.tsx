@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/atoms/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/card";
-import { submitAnswerAction } from "@/modules/quiz-session";
+import { submitAnswerAction } from "../actions";
 import { AnswerFeedback } from "./answer-feedback";
 
 const CHOICE_LABELS = ["A", "B", "C", "D"];

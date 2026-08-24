@@ -10,6 +10,26 @@ export const MOCK_DELAY_MIN_MS = 500;
 export const MOCK_DELAY_MAX_MS = 1500;
 export const SOURCE_EXCERPT_MAX_LENGTH = 200;
 
+// --- 認証 ---
+/** セッションクッキーの名前 */
+export const SESSION_COOKIE_NAME = "quizstack_session";
+/** セッションの有効期間（日）。この期間を過ぎたセッションは無効になる */
+export const SESSION_TTL_DAYS = 30;
+/** セッショントークンの長さ（バイト）。推測不能な長さを確保する */
+export const SESSION_TOKEN_BYTES = 32;
+
+export const MIN_PASSWORD_LENGTH = 8;
+export const MAX_PASSWORD_LENGTH = 128;
+export const MAX_USER_NAME_LENGTH = 50;
+export const MAX_EMAIL_LENGTH = 254; // RFC 5321 の上限
+
+/** scrypt のパラメータ。N は大きいほど総当たりに強いがログインも遅くなる */
+export const SCRYPT_COST = 16_384; // N
+export const SCRYPT_BLOCK_SIZE = 8; // r
+export const SCRYPT_PARALLELIZATION = 1; // p
+export const SCRYPT_KEY_LENGTH = 64;
+export const SCRYPT_SALT_BYTES = 16;
+
 export const TRACKING_PARAMS = [
   "utm_source",
   "utm_medium",

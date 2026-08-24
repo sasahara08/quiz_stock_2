@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // better-sqlite3 はネイティブモジュールのため、バンドルせず実行時に読み込ませる。
+  serverExternalPackages: ["better-sqlite3"],
 };
 
 export default nextConfig;

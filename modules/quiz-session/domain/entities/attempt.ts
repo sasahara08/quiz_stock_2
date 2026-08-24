@@ -2,6 +2,7 @@
 // 1回のクイズ挑戦（Attempt）を表す。
 //
 // このクラスはデータの入れ物ではなく、挑戦にまつわるドメインルールそのものを持つ。
+//   - 挑戦は開始したユーザーのものであり、他人は閲覧も回答もできない
 //   - 出題順どおりにしか回答できない
 //   - 同じ問題には二度回答できない
 //   - 終了した挑戦は以後変化しない
@@ -28,6 +29,8 @@ export type AttemptStatus =
 
 /** 挑戦を開始するための入力 */
 export type StartAttemptInput = {
+  /** 挑戦を開始したユーザーのID。この挑戦に触れてよい唯一のユーザー */
+  ownerId: string;
   quizzes: readonly AttemptQuizData[];
   sourceTitle: string;
   sourceUrl: string;
@@ -61,6 +64,7 @@ export type AttemptReview = {
 /** 永続化用のプレーンデータ。DB 実装はこの形と相互変換する */
 export type AttemptSnapshot = {
   id: string;
+  ownerId: string;
   quizzes: AttemptQuizData[];
   currentIndex: number;
   answers: AnswerSnapshot[];
@@ -74,6 +78,8 @@ export class Attempt {
   private constructor(
     /** セッションを一意に識別するID（UUID）*/
     readonly id: string,
+    /** 挑戦を開始したユーザーのID */
+    readonly ownerId: string,
     /** このセッションで出題される全クイズ（正解情報込み）。外部には公開しない */
     private readonly quizzes: readonly AttemptQuiz[],
     /** 次に出題する問題のインデックス（0始まり）*/
@@ -95,8 +101,12 @@ export class Attempt {
     if (input.quizzes.length === 0) {
       throw new AppError("VALIDATION_ERROR", "出題するクイズが1問もありません");
     }
+    if (!input.ownerId) {
+      throw new AppError("VALIDATION_ERROR", "挑戦の所有者が指定されていません");
+    }
     return new Attempt(
       crypto.randomUUID(),
+      input.ownerId,
       input.quizzes.map((quiz) => AttemptQuiz.create(quiz)),
       0,
       [],
@@ -111,6 +121,7 @@ export class Attempt {
   static fromSnapshot(snapshot: AttemptSnapshot): Attempt {
     return new Attempt(
       snapshot.id,
+      snapshot.ownerId,
       snapshot.quizzes.map((quiz) => AttemptQuiz.create(quiz)),
       snapshot.currentIndex,
       snapshot.answers.map((answer) => Answer.fromSnapshot(answer)),
@@ -123,6 +134,11 @@ export class Attempt {
 
   get totalCount(): number {
     return this.quizzes.length;
+  }
+
+  /** この挑戦に触れてよいユーザーかを判定する */
+  isOwnedBy(userId: string): boolean {
+    return this.ownerId === userId;
   }
 
   get isFinished(): boolean {
@@ -184,6 +200,7 @@ export class Attempt {
 
     const attempt = new Attempt(
       this.id,
+      this.ownerId,
       this.quizzes,
       questionIndex + 1,
       answers,
@@ -230,6 +247,7 @@ export class Attempt {
   toSnapshot(): AttemptSnapshot {
     return {
       id: this.id,
+      ownerId: this.ownerId,
       quizzes: this.quizzes.map((quiz) => quiz.toSnapshot()),
       currentIndex: this.currentIndex,
       answers: this.answerList.map((answer) => answer.toSnapshot()),
