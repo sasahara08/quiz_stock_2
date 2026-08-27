@@ -21,11 +21,12 @@ export default function HomePage() {
     <div>
       <div className="mx-auto max-w-2xl px-4 py-12">
 
+        {/* ロゴはヘッダーが常時出しているため、ここでは繰り返さず
+            「この画面で何をするか」を見出しにする */}
         <header className="mb-10 text-center">
-          <div className="mb-4 inline-flex items-center justify-center rounded-2xl bg-primary/10 p-3">
-            <span className="text-3xl">🧠</span>
-          </div>
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">QuizStack</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            記事からクイズを作る
+          </h1>
           <p className="mt-3 text-base text-muted-foreground">
             記事のURLを貼るだけで、4択クイズが自動生成されます
           </p>
