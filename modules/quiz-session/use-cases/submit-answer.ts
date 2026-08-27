@@ -24,10 +24,12 @@ export class SubmitAnswerUseCase {
 
   execute(
     attemptId: string,
+    userId: string,
     questionIndex: number,
     selectedIndex: number,
   ): SubmitAnswerResult {
-    const attempt = this.getAttempt.execute(attemptId);
+    // 所有者以外は取得の時点で弾かれる
+    const attempt = this.getAttempt.execute(attemptId, userId);
     const { attempt: updated, ...result } = attempt.submitAnswer(
       questionIndex,
       selectedIndex,

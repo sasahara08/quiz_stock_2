@@ -14,21 +14,22 @@ datasource db {
 
 // ============================================
 // user モジュール
-// ユーザー・認証を扱う（フェーズ2）
-// フェーズ1では匿名利用のみのため、実質未使用
+// ユーザー登録・メールアドレスとパスワードによる認証を扱う
 // ============================================
 
 /// 登録ユーザー
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  createdAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  /// 正規化済み（小文字・前後空白除去）のメールアドレス
+  email        String   @unique
+  name         String
+  /// scrypt によるハッシュ。平文パスワードは保存しない
+  passwordHash String
+  createdAt    DateTime @default(now())
 
   generationBatches GenerationBatch[]
   quizzes           Quiz[]
   attempts          Attempt[]
-  accounts          Account[]
   sessions          Session[]
 
   @@map("users")
@@ -63,7 +64,7 @@ model GenerationBatch {
 /// クイズ（1問単位のエンティティ。このアプリの真の主役）
 /// 旧来の「URL単位の問題セット」ではなく、1問ごとに独立して検索・出題できる
 model Quiz {
-  id                String   @id @default(uuid())
+  id                String  @id @default(uuid())
   /// 匿名生成の場合は null
   userId            String?
   generationBatchId String
@@ -93,8 +94,8 @@ model Quiz {
   answers         Answer[]
 
   @@index([userId, lastIsCorrect]) // 全体からの復習対象の抽出用
-  @@index([userId, sourceUrl])     // URL単位の振り返り・URL指定復習用
-  @@index([userId, createdAt])     // 一覧表示用
+  @@index([userId, sourceUrl]) // URL単位の振り返り・URL指定復習用
+  @@index([userId, createdAt]) // 一覧表示用
   @@map("quizzes")
 }
 
@@ -116,7 +117,7 @@ model Attempt {
   mode String
 
   /// mode = "review_url" のときのみ使用
-  sourceUrl String?
+  sourceUrl         String?
   /// mode = "normal" のときのみ使用
   generationBatchId String?
 
@@ -173,49 +174,22 @@ model Answer {
 
 // ============================================
 // user モジュール（続き）
-// Auth.js（NextAuth）標準スキーマ（フェーズ2）
-// アダプタが要求する形式に合わせているため、命名規則を他モデルと揃えていない
 // ============================================
 
-/// OAuthプロバイダとの連携情報
-model Account {
-  id                String  @id @default(uuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@map("accounts")
-}
-
 /// ログインセッション
+/// Cookie に入れるトークンそのものは保存せず、SHA-256 ハッシュのみを保持する。
+/// DBが漏れた場合でもセッションを乗っ取られないようにするため。
 model Session {
-  id           String   @id @default(uuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
+  id        String   @id @default(uuid())
+  /// セッショントークンの SHA-256 ハッシュ（16進）
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([expiresAt]) // 期限切れセッションの一括削除用
   @@map("sessions")
-}
-
-/// メール確認・パスワードリセット等の一時トークン
-model VerificationToken {
-  identifier String
-  token      String
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
 }

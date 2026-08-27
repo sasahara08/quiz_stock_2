@@ -1,5 +1,9 @@
 // ユースケース層
-// AttemptStore から Attempt を取得する。存在しない場合は AppError を投げる。
+// AttemptStore から Attempt を取得する。
+//
+// 他人の挑戦に対しても「見つかりません」を返す（「権限がありません」ではなく）。
+// 存在するかどうかを区別して返すと、IDの総当たりで他人の挑戦の実在を
+// 確認できてしまうため。
 import { inject, injectable } from "inversify";
 import { AppError } from "@/lib/errors";
 import type { Attempt } from "../domain/entities/attempt";
@@ -13,9 +17,9 @@ export class GetAttemptUseCase {
     private readonly store: AttemptStore,
   ) {}
 
-  execute(id: string): Attempt {
+  execute(id: string, userId: string): Attempt {
     const attempt = this.store.get(id);
-    if (!attempt) {
+    if (!attempt || !attempt.isOwnedBy(userId)) {
       throw new AppError("ATTEMPT_NOT_FOUND", "クイズセッションが見つかりません");
     }
     return attempt;

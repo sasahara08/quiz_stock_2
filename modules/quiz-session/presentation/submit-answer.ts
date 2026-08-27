@@ -4,11 +4,15 @@
 // Zod は「外部から届いた値が型どおりか」だけを見る。
 // 挑戦のルール（順番・二重回答・終了後の変更禁止）は Attempt が守るため、ここでは扱わない。
 // 正解・解説は回答後のレスポンスで初めてクライアントに渡す（回答前には送らない）。
+//
+// 誰の挑戦かはクライアントの申告ではなくセッションから決める。
+// attemptId だけで回答できると、他人の挑戦を進められてしまうため。
 import { z } from "zod";
 import type { ActionResult } from "@/lib/action-result";
 import { CHOICE_COUNT } from "@/lib/constants";
 import { container } from "@/lib/container";
 import { AppError, errorMessages } from "@/lib/errors";
+import { requireUserOrThrow } from "@/modules/user";
 import { SubmitAnswerUseCase, type SubmitAnswerResult } from "../use-cases/submit-answer";
 
 const inputSchema = z.object({
@@ -29,9 +33,11 @@ export async function submitAnswerAction(
   }
 
   try {
+    const user = await requireUserOrThrow();
     const submitAnswer = container.get(SubmitAnswerUseCase);
     const result = submitAnswer.execute(
       parsed.data.attemptId,
+      user.id,
       parsed.data.questionIndex,
       parsed.data.selectedIndex,
     );

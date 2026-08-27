@@ -18,7 +18,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background">
+    <div>
       <div className="mx-auto max-w-2xl px-4 py-12">
 
         <header className="mb-10 text-center">

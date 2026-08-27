@@ -16,9 +16,12 @@ function quiz(answerIndex: number, label: string): AttemptQuizData {
   };
 }
 
+const OWNER_ID = "user-1";
+
 /** 正解が順に 0 / 1 / 2 の3問を持つ挑戦 */
 function startAttempt(): Attempt {
   return Attempt.start({
+    ownerId: OWNER_ID,
     quizzes: [quiz(0, "Q1"), quiz(1, "Q2"), quiz(2, "Q3")],
     sourceTitle: "テスト記事",
     sourceUrl: "https://example.com/article",
@@ -54,10 +57,24 @@ describe("Attempt.start", () => {
     expect(attempt.totalCount).toBe(3);
   });
 
+  it("所有者が指定されていない場合は開始できない", () => {
+    expectAppError(
+      () =>
+        Attempt.start({
+          ownerId: "",
+          quizzes: [quiz(0, "Q1")],
+          sourceTitle: "テスト記事",
+          sourceUrl: "https://example.com/article",
+        }),
+      "VALIDATION_ERROR",
+    );
+  });
+
   it("クイズが1問もない場合は開始できない", () => {
     expectAppError(
       () =>
         Attempt.start({
+          ownerId: OWNER_ID,
           quizzes: [],
           sourceTitle: "テスト記事",
           sourceUrl: "https://example.com/article",
@@ -70,12 +87,29 @@ describe("Attempt.start", () => {
     expectAppError(
       () =>
         Attempt.start({
+          ownerId: OWNER_ID,
           quizzes: [{ ...quiz(0, "Q1"), choices: ["A", "B"] }],
           sourceTitle: "テスト記事",
           sourceUrl: "https://example.com/article",
         }),
       "VALIDATION_ERROR",
     );
+  });
+});
+
+describe("Attempt#isOwnedBy", () => {
+  it("開始したユーザーのものと判定する", () => {
+    expect(startAttempt().isOwnedBy(OWNER_ID)).toBe(true);
+  });
+
+  it("別のユーザーのものとは判定しない", () => {
+    expect(startAttempt().isOwnedBy("user-2")).toBe(false);
+  });
+
+  it("回答しても所有者は変わらない", () => {
+    const { attempt } = startAttempt().submitAnswer(0, 0);
+    expect(attempt.isOwnedBy(OWNER_ID)).toBe(true);
+    expect(attempt.isOwnedBy("user-2")).toBe(false);
   });
 });
 
@@ -171,6 +205,7 @@ describe("Attempt のスナップショット", () => {
     const midway = answerInOrder(startAttempt(), [0, 1]);
     const restored = Attempt.fromSnapshot(midway.toSnapshot());
 
+    expect(restored.isOwnedBy(OWNER_ID)).toBe(true);
     expect(restored.currentIndex).toBe(2);
     expect(restored.answers).toHaveLength(2);
 

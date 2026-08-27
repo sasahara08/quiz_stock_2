@@ -10,6 +10,12 @@ export const ErrorCode = {
   ALREADY_ANSWERED: "ALREADY_ANSWERED",
   ATTEMPT_FINISHED: "ATTEMPT_FINISHED",
   ATTEMPT_IN_PROGRESS: "ATTEMPT_IN_PROGRESS",
+  INVALID_EMAIL: "INVALID_EMAIL",
+  WEAK_PASSWORD: "WEAK_PASSWORD",
+  INVALID_USER_NAME: "INVALID_USER_NAME",
+  EMAIL_ALREADY_REGISTERED: "EMAIL_ALREADY_REGISTERED",
+  INVALID_CREDENTIALS: "INVALID_CREDENTIALS",
+  UNAUTHENTICATED: "UNAUTHENTICATED",
   INTERNAL_ERROR: "INTERNAL_ERROR",
 } as const;
 
@@ -29,6 +35,14 @@ export const errorMessages: Record<ErrorCode, string> = {
   ALREADY_ANSWERED: "この問題にはすでに回答済みです",
   ATTEMPT_FINISHED: "このクイズはすでに終了しています",
   ATTEMPT_IN_PROGRESS: "このクイズはまだ回答中です",
+  INVALID_EMAIL: "メールアドレスの形式が正しくありません",
+  WEAK_PASSWORD: "パスワードは8文字以上で入力してください",
+  INVALID_USER_NAME: "ユーザー名を入力してください",
+  EMAIL_ALREADY_REGISTERED: "このメールアドレスはすでに登録されています",
+  // 「メールアドレスが存在しない」と「パスワードが違う」を区別しない。
+  // 区別すると、登録済みメールアドレスの存在を外部から確認できてしまうため。
+  INVALID_CREDENTIALS: "メールアドレスまたはパスワードが正しくありません",
+  UNAUTHENTICATED: "ログインが必要です",
   INTERNAL_ERROR: "エラーが発生しました。時間をおいて再度お試しください",
 };
 

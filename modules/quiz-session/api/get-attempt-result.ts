@@ -2,6 +2,7 @@
 // 結果画面に必要な全データを返す。
 // 「完了していなければ振り返りは見られない」「どの回答がどの問題に対応するか」は
 // Attempt.review() が判断するため、ここは画面向けの形に詰め替えるだけ。
+// 所有者以外には null を返す（GetAttemptUseCase が他人の挑戦を弾く）。
 // 完了済みの挑戦のみが対象なので、正解・解説を含めても安全。
 import { container } from "@/lib/container";
 import { GetAttemptUseCase } from "../use-cases/get-attempt";
@@ -27,10 +28,13 @@ export type AttemptResultData = {
   answers: AttemptResultItem[];
 };
 
-export function getAttemptResult(id: string): AttemptResultData | null {
+export function getAttemptResult(
+  id: string,
+  userId: string,
+): AttemptResultData | null {
   try {
     const getAttempt = container.get(GetAttemptUseCase);
-    const attempt = getAttempt.execute(id);
+    const attempt = getAttempt.execute(id, userId);
     const review = attempt.review();
 
     return {
