@@ -46,14 +46,13 @@ model User {
 /// 挑戦や正誤判定の単位としては使わない（あくまで記録用）
 model GenerationBatch {
   id            String   @id @default(uuid())
-  /// 匿名生成の場合は null
-  userId        String?
+  userId        String
   sourceUrl     String
   sourceTitle   String
   questionCount Int
   createdAt     DateTime @default(now())
 
-  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   quizzes  Quiz[]
   attempts Attempt[]
 
@@ -64,9 +63,8 @@ model GenerationBatch {
 /// クイズ（1問単位のエンティティ。このアプリの真の主役）
 /// 旧来の「URL単位の問題セット」ではなく、1問ごとに独立して検索・出題できる
 model Quiz {
-  id                String  @id @default(uuid())
-  /// 匿名生成の場合は null
-  userId            String?
+  id                String @id @default(uuid())
+  userId            String
   generationBatchId String
 
   /// 非正規化（generationBatchと重複して保持）
@@ -88,12 +86,12 @@ model Quiz {
 
   createdAt DateTime @default(now())
 
-  user            User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   generationBatch GenerationBatch @relation(fields: [generationBatchId], references: [id], onDelete: Cascade)
   attemptQuizzes  AttemptQuiz[]
   answers         Answer[]
 
-  @@index([userId, lastIsCorrect]) // 全体からの復習対象の抽出用
+  @@index([userId, lastIsCorrect, lastAnsweredAt]) // 復習対象の抽出（古い順に並べる）用
   @@index([userId, sourceUrl]) // URL単位の振り返り・URL指定復習用
   @@index([userId, createdAt]) // 一覧表示用
   @@map("quizzes")
@@ -108,16 +106,21 @@ model Quiz {
 /// 挑戦（セッション）
 /// 出題モード（通常/全体復習/URL復習）を問わず同じ形で表現する
 model Attempt {
-  id     String  @id @default(uuid())
-  /// 匿名挑戦の場合は null
-  userId String?
+  id     String @id @default(uuid())
+  userId String
 
-  /// 出題モード: "normal" | "review_all" | "review_url"
-  /// SQLiteがenumを持たないためString。値の妥当性はアプリ側で担保する
+  /// 出題モード。SQLiteがenumを持たないためString。値の妥当性はアプリ側で担保する
+  ///   "normal"           生成したてのクイズ全問
+  ///   "review_all"       全体の復習対象（間違えたままの問題）から選んだ問数まで
+  ///   "review_url_wrong" その記事の復習対象すべて
+  ///   "review_url_all"   その記事の全問
+  ///   "review_selected"  一覧などで選んだ問題
   mode String
 
-  /// mode = "review_url" のときのみ使用
+  /// mode = "review_url_wrong" | "review_url_all" のときのみ使用
   sourceUrl         String?
+  /// 結果画面の出典表示に使う。復習で記事が特定できない場合は null
+  sourceTitle       String?
   /// mode = "normal" のときのみ使用
   generationBatchId String?
 
@@ -127,7 +130,7 @@ model Attempt {
   /// 完了時に確定する正答数
   score      Int?
 
-  user            User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   generationBatch GenerationBatch? @relation(fields: [generationBatchId], references: [id], onDelete: SetNull)
   attemptQuizzes  AttemptQuiz[]
   answers         Answer[]

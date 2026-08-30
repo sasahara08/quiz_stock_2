@@ -12,6 +12,8 @@ export type LearningSummaryData = {
   answeredCount: number;
   /** そのうち正解した数 */
   correctCount: number;
+  /** 最後に答えて間違えたままの問題数（復習待ち）*/
+  reviewCount: number;
 };
 
 export class LearningSummary {
@@ -19,6 +21,7 @@ export class LearningSummary {
     readonly createdQuizCount: number,
     readonly answeredCount: number,
     readonly correctCount: number,
+    readonly reviewCount: number,
   ) {}
 
   static of(data: LearningSummaryData): LearningSummary {
@@ -26,6 +29,7 @@ export class LearningSummary {
       ["作成クイズ数", data.createdQuizCount],
       ["回答数", data.answeredCount],
       ["正解数", data.correctCount],
+      ["復習待ち数", data.reviewCount],
     ] as const) {
       if (!Number.isInteger(value) || value < 0) {
         throw new AppError("VALIDATION_ERROR", `${label}が不正です: ${value}`);
@@ -38,10 +42,18 @@ export class LearningSummary {
       );
     }
 
+    if (data.reviewCount > data.createdQuizCount) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        `復習待ち数が作成クイズ数を超えています: ${data.reviewCount} > ${data.createdQuizCount}`,
+      );
+    }
+
     return new LearningSummary(
       data.createdQuizCount,
       data.answeredCount,
       data.correctCount,
+      data.reviewCount,
     );
   }
 

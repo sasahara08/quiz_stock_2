@@ -44,6 +44,7 @@ export type DashboardView = {
     createdQuizCount: number;
     accuracyPercent: number;
     answeredCount: number;
+    reviewCount: number;
   };
   study: {
     totalStudyDays: number;
@@ -64,6 +65,7 @@ export async function getDashboardData(userId: string): Promise<DashboardView> {
       createdQuizCount: dashboard.summary.createdQuizCount,
       accuracyPercent: dashboard.summary.accuracyPercent,
       answeredCount: dashboard.summary.answeredCount,
+      reviewCount: dashboard.summary.reviewCount,
     },
     study: {
       totalStudyDays: dashboard.calendar.totalStudyDays,

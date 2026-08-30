@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { getDashboardData } from "@/modules/analytics";
+import { CatalogLinks } from "@/modules/analytics/components/catalog-links";
 import { DashboardEmpty } from "@/modules/analytics/components/dashboard-empty";
 import { RecentAttempts } from "@/modules/analytics/components/recent-attempts";
 import { StudyCalendarCard } from "@/modules/analytics/components/study-calendar-card";
@@ -38,6 +39,11 @@ export default async function DashboardPage() {
         <main className="flex flex-col gap-8">
           <SummaryCards summary={data.summary} />
 
+          <CatalogLinks
+            quizCount={data.summary.createdQuizCount}
+            reviewCount={data.summary.reviewCount}
+          />
+
           <StudyCalendarCard study={data.study} />
 
           <section className="flex flex-col gap-3">
@@ -46,10 +52,6 @@ export default async function DashboardPage() {
           </section>
         </main>
       )}
-
-      <footer className="mt-12 text-center text-xs text-muted-foreground">
-        表示中の数値は開発用のサンプルデータです。
-      </footer>
     </div>
   );
 }

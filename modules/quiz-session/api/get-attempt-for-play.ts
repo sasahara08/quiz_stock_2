@@ -4,31 +4,37 @@
 // 解説（explanation）はそもそもここまで渡ってこない。
 // 所有者以外には null を返す（GetAttemptUseCase が他人の挑戦を弾く）。
 import { container } from "@/lib/container";
-import type { AttemptStatus } from "../domain/entities/attempt";
+import type { AttemptMode, AttemptStatus } from "../domain/entities/attempt";
 import type { QuestionForPlay } from "../domain/entities/attempt-quiz";
 import { GetAttemptUseCase } from "../use-cases/get-attempt";
 
 export type AttemptForPlay = {
   id: string;
+  mode: AttemptMode;
+  isReview: boolean;
   currentIndex: number;
   totalCount: number;
   status: AttemptStatus;
+  sourceTitle: string | null;
   currentQuestion: QuestionForPlay | null;
 };
 
-export function getAttemptForPlay(
+export async function getAttemptForPlay(
   id: string,
   userId: string,
-): AttemptForPlay | null {
+): Promise<AttemptForPlay | null> {
   try {
     const getAttempt = container.get(GetAttemptUseCase);
-    const attempt = getAttempt.execute(id, userId);
+    const attempt = await getAttempt.execute(id, userId);
 
     return {
       id: attempt.id,
+      mode: attempt.mode,
+      isReview: attempt.isReview,
       currentIndex: attempt.currentIndex,
       totalCount: attempt.totalCount,
       status: attempt.status,
+      sourceTitle: attempt.sourceTitle,
       currentQuestion: attempt.currentQuestion,
     };
   } catch {

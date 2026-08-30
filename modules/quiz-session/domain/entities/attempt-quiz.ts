@@ -4,11 +4,16 @@
 // 出題用ビューの組み立て（forPlay）もここに置く。
 // これにより「正解は回答前のクライアントに渡さない」という原則を、
 // 呼び出し側の書き方に依存せずエンティティ側で守れる。
+//
+// quizId は quiz-catalog に保管された元のクイズを指す。回答結果を
+// そちらへ反映する（lastIsCorrect の更新）ために必要。
 import { CHOICE_COUNT } from "@/lib/constants";
 import { AppError } from "@/lib/errors";
 
 /** 永続化・モジュール間受け渡しに使うプレーンデータ */
 export type AttemptQuizData = {
+  /** quiz-catalog の Quiz のID */
+  quizId: string;
   text: string;
   choices: readonly string[];
   answerIndex: number;
@@ -28,6 +33,7 @@ function isChoiceIndex(index: number): boolean {
 
 export class AttemptQuiz {
   private constructor(
+    readonly quizId: string,
     readonly text: string,
     readonly choices: readonly string[],
     readonly answerIndex: number,
@@ -41,6 +47,9 @@ export class AttemptQuiz {
    * answerIndex の範囲を呼び出し側で確認する必要がない。
    */
   static create(data: AttemptQuizData): AttemptQuiz {
+    if (!data.quizId) {
+      throw new AppError("VALIDATION_ERROR", "出題するクイズのIDが空です");
+    }
     if (!data.text.trim()) {
       throw new AppError("VALIDATION_ERROR", "問題文が空です");
     }
@@ -57,6 +66,7 @@ export class AttemptQuiz {
       );
     }
     return new AttemptQuiz(
+      data.quizId,
       data.text,
       [...data.choices],
       data.answerIndex,
@@ -86,6 +96,7 @@ export class AttemptQuiz {
 
   toSnapshot(): AttemptQuizData {
     return {
+      quizId: this.quizId,
       text: this.text,
       choices: [...this.choices],
       answerIndex: this.answerIndex,

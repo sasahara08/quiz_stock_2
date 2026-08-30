@@ -10,6 +10,12 @@ export const MOCK_DELAY_MIN_MS = 500;
 export const MOCK_DELAY_MAX_MS = 1500;
 export const SOURCE_EXCERPT_MAX_LENGTH = 200;
 
+// --- 復習・問題一覧 ---
+/** 復習セッションで選べる出題数。これ以外に「すべて」がある */
+export const REVIEW_SIZE_OPTIONS = [10, 20] as const;
+/** 問題一覧の1ページあたりの件数 */
+export const QUIZ_LIST_PAGE_SIZE = 30;
+
 // --- ダッシュボード ---
 /** 直近の挑戦履歴に表示する件数 */
 export const RECENT_ATTEMPTS_LIMIT = 5;
@@ -17,13 +23,6 @@ export const RECENT_ATTEMPTS_LIMIT = 5;
 export const STUDY_CALENDAR_MONTHS = 13;
 /** 芝生の濃さの段階数（0＝学習なし 〜 4＝最も多い）*/
 export const STUDY_LEVEL_MAX = 4;
-/**
- * 空状態を確認するためのスイッチ。
- * true にするとモックが「まだ何もしていないユーザー」を返す。
- * 実データに接続したら不要になる開発用の仕組み。
- */
-export const MOCK_DASHBOARD_IS_EMPTY = false;
-
 // --- 認証 ---
 /** セッションクッキーの名前 */
 export const SESSION_COOKIE_NAME = "quizstack_session";

@@ -37,6 +37,7 @@ describe("LearningSummary", () => {
       createdQuizCount: 10,
       answeredCount: 8,
       correctCount: 6,
+      reviewCount: 0,
     });
     expect(summary.accuracyPercent).toBe(75);
   });
@@ -46,6 +47,7 @@ describe("LearningSummary", () => {
       createdQuizCount: 3,
       answeredCount: 0,
       correctCount: 0,
+      reviewCount: 0,
     });
     expect(summary.accuracyPercent).toBe(0);
   });
@@ -57,6 +59,7 @@ describe("LearningSummary", () => {
           createdQuizCount: 10,
           answeredCount: 5,
           correctCount: 6,
+          reviewCount: 0,
         }),
       "VALIDATION_ERROR",
     );
@@ -69,6 +72,7 @@ describe("LearningSummary", () => {
           createdQuizCount: -1,
           answeredCount: 0,
           correctCount: 0,
+          reviewCount: 0,
         }),
       "VALIDATION_ERROR",
     );
@@ -131,8 +135,12 @@ describe("Dashboard", () => {
     createdQuizCount: 10,
     answeredCount: 8,
     correctCount: 6,
+    reviewCount: 0,
   });
-  const calendar = StudyCalendar.of([{ date: "2026-08-01", answerCount: 3 }], TODAY);
+  const calendar = StudyCalendar.of(
+    [{ date: "2026-08-01", answerCount: 3 }],
+    TODAY,
+  );
 
   it("履歴が新しい順でなければ受け付けない", () => {
     expectAppError(
@@ -169,6 +177,7 @@ describe("Dashboard", () => {
         createdQuizCount: 0,
         answeredCount: 0,
         correctCount: 0,
+        reviewCount: 0,
       }),
       calendar: StudyCalendar.of([], TODAY),
       recentAttempts: [],
