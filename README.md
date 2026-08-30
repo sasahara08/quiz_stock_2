@@ -101,7 +101,7 @@ modules/<name>/
 └── index.ts         サーバー向けの公開口
 ```
 
-|  | domain | use-cases | infra | presentation | api | components |
+| モジュール | domain | use-cases | infra | presentation | api | components |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|
 | `user` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `quiz-session` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -154,7 +154,7 @@ quiz-session    ──→ quiz-catalog         出題対象を引く / 正誤を
 `components/organisms/` に置き、モジュールは自分の関心事の部品だけを提供して、
 両者を結び付けるのは `app/` のレイアウトの役割とする。
 
-### DI
+### DI（依存の結線）
 
 ポートと実装の結び付けは各モジュールの `container.ts` の1箇所だけ。
 モックを本実装に差し替えるときは **bind 先を変えるだけ**で済むようにする。
