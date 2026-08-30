@@ -6,7 +6,8 @@
 // ログアウトは Server Action を直接呼ぶ。アクション側が redirect するため、
 // 完了後は自動的にログイン画面へ遷移する。
 import { useTransition } from "react";
-import { ChevronDown, LogOut } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +58,17 @@ export function UserMenu({ user }: { user: PublicUser }) {
           </p>
           <p className="truncate text-xs text-muted-foreground">{user.email}</p>
         </DropdownMenuLabel>
+
+        <DropdownMenuSeparator />
+
+        {/* asChild でメニュー項目そのものをリンクにする。
+            中に <a> を入れ子にすると、項目の余白部分がクリックできなくなる */}
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard">
+            <LayoutDashboard />
+            ダッシュボード
+          </Link>
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
