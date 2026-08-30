@@ -114,6 +114,8 @@ modules/<name>/
 
 ### モジュール間の依存
 
+構成図: [`docs/architecture.drawio`](docs/architecture.drawio)（draw.io / diagrams.net で開く）
+
 ```
 quiz-generation ──→ content-extraction   本文抽出の結果を受け取る
                 ──→ quiz-catalog         生成したクイズを保管する
@@ -121,9 +123,18 @@ quiz-generation ──→ content-extraction   本文抽出の結果を受け取
                 ──→ user                 誰の生成かを決める
 quiz-session    ──→ quiz-catalog         出題対象を引く / 正誤を書き戻す
                 ──→ user                 誰の挑戦かを決める
+quiz-catalog    ──→ quiz-session         復習を開始する（※循環。下記）
 ```
 
 `content-extraction` と `user` はどこにも依存しない。
+`analytics` はどのモジュールも import しないが、Prisma 経由で他モジュールの
+テーブルを直接読む（読み取り専用の集計ビューとしての意図的な例外）。
+
+**`quiz-catalog` と `quiz-session` は相互に依存している。** `quiz-catalog` の
+`components/`（問題一覧・復習開始ボタン）が `quiz-session/actions` の
+`startReviewAction` を呼ぶ一方、`quiz-session` の `use-cases/` は
+`quiz-catalog` を import する。層が違うため実害は出ていないが、
+モジュール単位で見れば循環しており、切るなら復習開始のUIを `app/` 側へ寄せることになる。
 
 ---
 

@@ -59,6 +59,8 @@
 | `quiz-session` | 出題・回答・採点 | 本実装（Prisma + SQLite） |
 | `analytics` | 学習状況の集計（ダッシュボード） | 本実装（DB集計） |
 
+モジュール間の関係は [`architecture.drawio`](architecture.drawio) に図示している。
+
 `quiz-catalog` は復習（第5章）と問題一覧の土台。
 「生成する人」ではなく「保管し、条件で検索させる人」という位置づけで、
 `Quiz.lastIsCorrect` の更新もこのモジュールが担う。
