@@ -403,6 +403,32 @@ GitHub のコントリビューショングラフに相当する表示。
 
 - Server Action は例外を throw せず、必ず `ActionResult<T>`（成功/失敗の判別共用体）で返す
 - `ErrorCode` とユーザー向け文言は `lib/errors.ts` に集約する
+- 例外の `message` はクライアントに返さない。外に出るのは `errorMessages` の文言だけ
+
+#### サーバーコンソールへの記録
+
+サーバー側で握り潰した例外は、必ずサーバーのコンソールに残す。
+画面にはユーザー向けの文言しか出せないため、原因はコンソール側にしか残らない。
+
+| 記録する場所 | 対象 | 出し方 |
+|---|---|---|
+| `lib/server-logger.ts` の `logServerError()` | 記録の唯一の窓口 | 下表の基準で warn / error を出し分ける |
+| `lib/action-result.ts` の `failure()` / `failureOf()` | Server Action の失敗 | 記録したうえで `ActionResult` に変換する |
+| `modules/*/api/*.ts` | RSC が `null` を返す前 | `logServerError()` を直接呼ぶ |
+| `instrumentation.ts` の `onRequestError` | 上記を通らずに落ちたもの（RSC レンダリング・ルートハンドラ） | 経路（メソッド・routeType・routePath）を添えて記録する |
+
+出し分けの基準:
+
+| 例外 | 扱い | 出力 |
+|---|---|---|
+| `AppError`（`INTERNAL_ERROR` 以外） | 業務上あり得る失敗 | `console.warn` に1行。スタックは出さない |
+| `AppError`（`INTERNAL_ERROR`）／その他の例外 | 不具合・障害 | `console.error` にスタックと `cause` の連鎖まで |
+
+`redirect()` / `notFound()` の例外（`digest` が `NEXT_REDIRECT` / `NEXT_NOT_FOUND`）は
+失敗ではないため記録しない。
+
+想定内の失敗までスタック付きで出すとコンソールが埋まり、直すべき不具合が
+見えなくなる。`console.warn` と `console.error` の境目はそのための線引き。
 
 ### その他
 

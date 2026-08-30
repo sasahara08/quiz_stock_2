@@ -5,9 +5,8 @@
 //
 // 生成したクイズは quiz-catalog に保管してから出題する。
 // 保管しないと復習も問題一覧も成り立たないため、ここが起点になる。
-import type { ActionResult } from "@/lib/action-result";
+import { failure, failureOf, type ActionResult } from "@/lib/action-result";
 import { container } from "@/lib/container";
-import { AppError, errorMessages } from "@/lib/errors";
 import { ExtractContentUseCase } from "@/modules/content-extraction";
 import { StoreGeneratedQuizzesUseCase } from "@/modules/quiz-catalog";
 import { CreateAttemptUseCase } from "@/modules/quiz-session";
@@ -15,15 +14,16 @@ import { requireUserOrThrow } from "@/modules/user";
 import { GenerateQuizzesUseCase } from "../use-cases/generate-quizzes";
 import { startGenerationInputSchema } from "../schema";
 
-export async function startGenerationAction(
-  input: { url: string },
-): Promise<ActionResult<{ attemptId: string }>> {
+export async function startGenerationAction(input: {
+  url: string;
+}): Promise<ActionResult<{ attemptId: string }>> {
   const parsed = startGenerationInputSchema.safeParse(input);
   if (!parsed.success) {
-    return {
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: errorMessages.VALIDATION_ERROR },
-    };
+    return failureOf(
+      "startGenerationAction",
+      "VALIDATION_ERROR",
+      "生成開始の入力が schema に合いません",
+    );
   }
 
   try {
@@ -55,15 +55,6 @@ export async function startGenerationAction(
 
     return { success: true, data: { attemptId: attempt.id } };
   } catch (err) {
-    if (err instanceof AppError) {
-      return {
-        success: false,
-        error: { code: err.code, message: errorMessages[err.code] },
-      };
-    }
-    return {
-      success: false,
-      error: { code: "INTERNAL_ERROR", message: errorMessages.INTERNAL_ERROR },
-    };
+    return failure("startGenerationAction", err);
   }
 }

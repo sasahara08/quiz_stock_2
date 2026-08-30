@@ -59,9 +59,11 @@ components/                モジュールに属さない共通UI
 lib/                       全モジュール共通の土台
   container.ts             DI コンポジションルート
   errors.ts                ErrorCode とユーザー向け文言
-  action-result.ts         Server Action の戻り値型
+  action-result.ts         Server Action の戻り値型と失敗の組み立て
+  server-logger.ts         サーバーコンソールへの記録（唯一の窓口）
   constants.ts             マジックナンバーの集約
   prisma.ts / relative-time.ts / utils.ts
+instrumentation.ts         自前の catch を通らなかったエラーの受け口
 prisma/                    schema.prisma と migrations/
 docs/spec.md               現行仕様書
 ```
@@ -164,6 +166,31 @@ quiz-session    ──→ quiz-catalog         出題対象を引く / 正誤を
 
 Server Action は例外を throw せず、必ず `ActionResult<T>`（成功/失敗の判別共用体）で
 返す。`ErrorCode` とユーザー向け文言は `lib/errors.ts` に集約する。
+**例外の `message` はクライアントに返さない**（内部の事情が漏れる）。
+
+その代わり、**握り潰した例外は必ずサーバーのコンソールに出す**。
+画面にはユーザー向けの文言しか出せないため、原因はコンソール側にしか残らない。
+
+| 出どころ | 記録の仕方 |
+|---|---|
+| Server Action | `failure(context, err)` / `failureOf(context, code, detail)` が記録して `ActionResult` を返す |
+| RSC 用の `api/`（`null` を返すもの） | `logServerError(context, err)` を直接呼ぶ |
+| 上記を通らずに落ちたもの | `instrumentation.ts` の `onRequestError` が経路ごと記録する |
+
+出し分けは `lib/server-logger.ts` の1箇所に集約している。
+
+| 例外 | 出力 |
+|---|---|
+| `AppError`（`INTERNAL_ERROR` 以外） | `console.warn` に1行。想定内の失敗なのでスタックは出さない |
+| それ以外・`INTERNAL_ERROR` | `console.error` にスタックと `cause` の連鎖まで |
+
+想定内の失敗までスタック付きで出すとコンソールが埋まり、直すべき不具合が見えなくなる。
+`redirect()` / `notFound()` の例外は失敗ではないため記録しない。
+
+```
+[QuizStack] 2026-08-30T12:51:50.319Z WARN  registerAction EMAIL_ALREADY_REGISTERED: このメールアドレスはすでに登録されています
+[QuizStack] 2026-08-30T12:49:24.821Z ERROR getAttemptForPlay PrismaClientKnownRequestError: ...
+```
 
 ### その他
 
