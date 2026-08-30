@@ -11,8 +11,10 @@
 //   - 振り返りは完了後にのみ取得できる
 // これらの不変条件は呼び出し側（ユースケース層）ではなく、必ずこのクラスの内側で守られる。
 //
+// 出題モード（通常 / 各種の復習）が違っても、解いている間の流れは同じ。
+// モードは「何を出題対象にしたか」の記録であり、回答の扱いを変えない。
+//
 // 状態はイミュータブルに扱い、変更は常に新しい Attempt を返す。
-// そのため保存先（AttemptStore）はインスタンスをそのまま保持しても安全。
 import { AppError } from "@/lib/errors";
 import { calculateScore } from "../rules/scoring";
 import { Answer, type AnswerSnapshot } from "./answer";
@@ -27,13 +29,37 @@ export type AttemptStatus =
   | "in-progress" // 回答中（まだ終わっていない）
   | "finished"; // 全問回答済み・スコア確定済み
 
+/** 出題モード。詳細は docs/spec.md 第5章 */
+export type AttemptMode =
+  | "normal" // 生成したてのクイズ全問
+  | "review_all" // 全体の復習対象から、選んだ問数まで
+  | "review_url_wrong" // その記事の復習対象すべて
+  | "review_url_all" // その記事の全問
+  | "review_selected"; // 一覧などで選んだ問題
+
+const ATTEMPT_MODES: readonly AttemptMode[] = [
+  "normal",
+  "review_all",
+  "review_url_wrong",
+  "review_url_all",
+  "review_selected",
+];
+
+export function isAttemptMode(value: string): value is AttemptMode {
+  return (ATTEMPT_MODES as readonly string[]).includes(value);
+}
+
 /** 挑戦を開始するための入力 */
 export type StartAttemptInput = {
   /** 挑戦を開始したユーザーのID。この挑戦に触れてよい唯一のユーザー */
   ownerId: string;
+  mode: AttemptMode;
   quizzes: readonly AttemptQuizData[];
-  sourceTitle: string;
-  sourceUrl: string;
+  /** 出典。復習で記事が特定できない場合は null */
+  sourceUrl?: string | null;
+  sourceTitle?: string | null;
+  /** mode = "normal" のときの生成バッチ */
+  generationBatchId?: string | null;
 };
 
 /** 回答受付の結果。更新後の Attempt と、回答者に返してよい情報 */
@@ -42,6 +68,8 @@ export type AnswerSubmission = {
   isCorrect: boolean;
   answerIndex: number;
   explanation: string;
+  /** 回答した問題の元ID。quiz-catalog へ結果を反映するために返す */
+  quizId: string;
 };
 
 /** 振り返り1問分。回答とその問題を対応付けたもの */
@@ -56,8 +84,8 @@ export type ReviewItem = {
 export type AttemptReview = {
   score: number;
   totalCount: number;
-  sourceTitle: string;
-  sourceUrl: string;
+  sourceTitle: string | null;
+  sourceUrl: string | null;
   items: ReviewItem[];
 };
 
@@ -65,13 +93,17 @@ export type AttemptReview = {
 export type AttemptSnapshot = {
   id: string;
   ownerId: string;
+  mode: AttemptMode;
   quizzes: AttemptQuizData[];
   currentIndex: number;
   answers: AnswerSnapshot[];
   status: AttemptStatus;
   score: number | null;
-  sourceTitle: string;
-  sourceUrl: string;
+  sourceTitle: string | null;
+  sourceUrl: string | null;
+  generationBatchId: string | null;
+  startedAt: Date;
+  finishedAt: Date | null;
 };
 
 export class Attempt {
@@ -80,6 +112,8 @@ export class Attempt {
     readonly id: string,
     /** 挑戦を開始したユーザーのID */
     readonly ownerId: string,
+    /** 何を出題対象にしたか */
+    readonly mode: AttemptMode,
     /** このセッションで出題される全クイズ（正解情報込み）。外部には公開しない */
     private readonly quizzes: readonly AttemptQuiz[],
     /** 次に出題する問題のインデックス（0始まり）*/
@@ -90,30 +124,37 @@ export class Attempt {
     readonly status: AttemptStatus,
     /** 正答数。finished になるまでは null */
     private readonly finalScore: number | null,
-    /** 出典記事のタイトル */
-    readonly sourceTitle: string,
+    /** 出典記事のタイトル。復習で記事が特定できない場合は null */
+    readonly sourceTitle: string | null,
     /** 出典記事のURL */
-    readonly sourceUrl: string,
+    readonly sourceUrl: string | null,
+    readonly generationBatchId: string | null,
+    readonly startedAt: Date,
+    readonly finishedAt: Date | null,
   ) {}
 
-  /** 生成されたクイズから新しい挑戦を開始する */
+  /** 出題対象を確定して新しい挑戦を開始する */
   static start(input: StartAttemptInput): Attempt {
-    if (input.quizzes.length === 0) {
-      throw new AppError("VALIDATION_ERROR", "出題するクイズが1問もありません");
-    }
     if (!input.ownerId) {
       throw new AppError("VALIDATION_ERROR", "挑戦の所有者が指定されていません");
+    }
+    if (input.quizzes.length === 0) {
+      throw new AppError("VALIDATION_ERROR", "出題するクイズが1問もありません");
     }
     return new Attempt(
       crypto.randomUUID(),
       input.ownerId,
+      input.mode,
       input.quizzes.map((quiz) => AttemptQuiz.create(quiz)),
       0,
       [],
       "in-progress",
       null,
-      input.sourceTitle,
-      input.sourceUrl,
+      input.sourceTitle ?? null,
+      input.sourceUrl ?? null,
+      input.generationBatchId ?? null,
+      new Date(),
+      null,
     );
   }
 
@@ -122,6 +163,7 @@ export class Attempt {
     return new Attempt(
       snapshot.id,
       snapshot.ownerId,
+      snapshot.mode,
       snapshot.quizzes.map((quiz) => AttemptQuiz.create(quiz)),
       snapshot.currentIndex,
       snapshot.answers.map((answer) => Answer.fromSnapshot(answer)),
@@ -129,6 +171,9 @@ export class Attempt {
       snapshot.score,
       snapshot.sourceTitle,
       snapshot.sourceUrl,
+      snapshot.generationBatchId,
+      snapshot.startedAt,
+      snapshot.finishedAt,
     );
   }
 
@@ -143,6 +188,11 @@ export class Attempt {
 
   get isFinished(): boolean {
     return this.status === "finished";
+  }
+
+  /** 復習として始めた挑戦か */
+  get isReview(): boolean {
+    return this.mode !== "normal";
   }
 
   /** 正答数。回答中は null */
@@ -169,7 +219,11 @@ export class Attempt {
    * 挑戦のルール（順番・二重回答・終了後の変更禁止）はすべてここで検証する。
    * 全問回答し終えた場合はその場で終了し、スコアを確定する。
    */
-  submitAnswer(questionIndex: number, selectedIndex: number): AnswerSubmission {
+  submitAnswer(
+    questionIndex: number,
+    selectedIndex: number,
+    now: Date = new Date(),
+  ): AnswerSubmission {
     if (this.isFinished) {
       throw new AppError("ATTEMPT_FINISHED", "終了した挑戦には回答できません");
     }
@@ -194,13 +248,14 @@ export class Attempt {
 
     const answers = [
       ...this.answerList,
-      Answer.record(questionIndex, selectedIndex, isCorrect),
+      Answer.record(questionIndex, selectedIndex, isCorrect, now),
     ];
     const isLastAnswer = answers.length >= this.quizzes.length;
 
     const attempt = new Attempt(
       this.id,
       this.ownerId,
+      this.mode,
       this.quizzes,
       questionIndex + 1,
       answers,
@@ -208,6 +263,9 @@ export class Attempt {
       isLastAnswer ? calculateScore(answers) : null,
       this.sourceTitle,
       this.sourceUrl,
+      this.generationBatchId,
+      this.startedAt,
+      isLastAnswer ? now : null,
     );
 
     return {
@@ -215,6 +273,7 @@ export class Attempt {
       isCorrect,
       answerIndex: quiz.answerIndex,
       explanation: quiz.explanation,
+      quizId: quiz.quizId,
     };
   }
 
@@ -243,11 +302,22 @@ export class Attempt {
     };
   }
 
+  /**
+   * この挑戦で間違えた問題のID。
+   * 結果画面の「間違えた問題を復習」に渡す。
+   */
+  wrongQuizIds(): string[] {
+    return this.answerList
+      .filter((answer) => !answer.isCorrect)
+      .map((answer) => this.quizzes[answer.questionIndex].quizId);
+  }
+
   /** 永続化用のプレーンデータに変換する。インフラ層からのみ使う */
   toSnapshot(): AttemptSnapshot {
     return {
       id: this.id,
       ownerId: this.ownerId,
+      mode: this.mode,
       quizzes: this.quizzes.map((quiz) => quiz.toSnapshot()),
       currentIndex: this.currentIndex,
       answers: this.answerList.map((answer) => answer.toSnapshot()),
@@ -255,6 +325,9 @@ export class Attempt {
       score: this.finalScore,
       sourceTitle: this.sourceTitle,
       sourceUrl: this.sourceUrl,
+      generationBatchId: this.generationBatchId,
+      startedAt: this.startedAt,
+      finishedAt: this.finishedAt,
     };
   }
 }

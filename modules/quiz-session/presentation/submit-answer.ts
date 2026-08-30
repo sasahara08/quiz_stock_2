@@ -35,7 +35,7 @@ export async function submitAnswerAction(
   try {
     const user = await requireUserOrThrow();
     const submitAnswer = container.get(SubmitAnswerUseCase);
-    const result = submitAnswer.execute(
+    const result = await submitAnswer.execute(
       parsed.data.attemptId,
       user.id,
       parsed.data.questionIndex,

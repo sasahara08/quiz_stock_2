@@ -6,6 +6,7 @@ export type AnswerSnapshot = {
   questionIndex: number;
   selectedIndex: number;
   isCorrect: boolean;
+  answeredAt: Date;
 };
 
 export class Answer {
@@ -16,14 +17,17 @@ export class Answer {
     readonly selectedIndex: number,
     /** 正解かどうか。判定は AttemptQuiz が行い、その結果をここに固定する */
     readonly isCorrect: boolean,
+    /** 回答した時刻。学習量の集計（日ごとの回答数）に使う */
+    readonly answeredAt: Date,
   ) {}
 
   static record(
     questionIndex: number,
     selectedIndex: number,
     isCorrect: boolean,
+    answeredAt: Date = new Date(),
   ): Answer {
-    return new Answer(questionIndex, selectedIndex, isCorrect);
+    return new Answer(questionIndex, selectedIndex, isCorrect, answeredAt);
   }
 
   static fromSnapshot(snapshot: AnswerSnapshot): Answer {
@@ -31,6 +35,7 @@ export class Answer {
       snapshot.questionIndex,
       snapshot.selectedIndex,
       snapshot.isCorrect,
+      snapshot.answeredAt,
     );
   }
 
@@ -44,6 +49,7 @@ export class Answer {
       questionIndex: this.questionIndex,
       selectedIndex: this.selectedIndex,
       isCorrect: this.isCorrect,
+      answeredAt: this.answeredAt,
     };
   }
 }

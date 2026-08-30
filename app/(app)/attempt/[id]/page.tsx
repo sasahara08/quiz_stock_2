@@ -14,7 +14,7 @@ export default async function AttemptPage({
   const { id } = await params;
   // 他人の挑戦は「見つかりません」になる（所有者チェックは getAttemptForPlay 側）
   const user = await requireUser();
-  const data = getAttemptForPlay(id, user.id);
+  const data = await getAttemptForPlay(id, user.id);
 
   if (!data) {
     return (

@@ -17,8 +17,8 @@ export class GetAttemptUseCase {
     private readonly store: AttemptStore,
   ) {}
 
-  execute(id: string, userId: string): Attempt {
-    const attempt = this.store.get(id);
+  async execute(id: string, userId: string): Promise<Attempt> {
+    const attempt = await this.store.get(id);
     if (!attempt || !attempt.isOwnedBy(userId)) {
       throw new AppError("ATTEMPT_NOT_FOUND", "クイズセッションが見つかりません");
     }

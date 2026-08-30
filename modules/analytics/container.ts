@@ -1,15 +1,15 @@
 // DI コンポジション（モジュール単位）
-// ポート（DashboardRepository）と実装（MockDashboardRepository）をここでのみ結び付ける。
-// 実データ集計に差し替える際はこのファイルの bind 先を変更するだけでよい。
+// ポート（DashboardRepository）と実装をここでのみ結び付ける。
+// モックが必要になったら bind 先を戻すだけでよい。
 import "reflect-metadata";
 import { ContainerModule } from "inversify";
 import { ANALYTICS_TYPES } from "./domain/types";
-import { MockDashboardRepository } from "./infrastructure/mock-dashboard-repository";
+import { PrismaDashboardRepository } from "./infrastructure/prisma-dashboard-repository";
 import { GetDashboardUseCase } from "./use-cases/get-dashboard";
 
 export const analyticsContainerModule = new ContainerModule(({ bind }) => {
   bind(ANALYTICS_TYPES.DashboardRepository)
-    .to(MockDashboardRepository)
+    .to(PrismaDashboardRepository)
     .inSingletonScope();
   bind(GetDashboardUseCase).toSelf().inSingletonScope();
 });

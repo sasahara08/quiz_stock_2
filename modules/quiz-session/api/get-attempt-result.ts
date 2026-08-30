@@ -21,24 +21,28 @@ export type AttemptResultItem = {
 
 export type AttemptResultData = {
   id: string;
+  isReview: boolean;
   totalCount: number;
   score: number;
-  sourceTitle: string;
-  sourceUrl: string;
+  sourceTitle: string | null;
+  sourceUrl: string | null;
   answers: AttemptResultItem[];
+  /** この回に間違えた問題のID。「間違えた問題を復習」に渡す */
+  wrongQuizIds: string[];
 };
 
-export function getAttemptResult(
+export async function getAttemptResult(
   id: string,
   userId: string,
-): AttemptResultData | null {
+): Promise<AttemptResultData | null> {
   try {
     const getAttempt = container.get(GetAttemptUseCase);
-    const attempt = getAttempt.execute(id, userId);
+    const attempt = await getAttempt.execute(id, userId);
     const review = attempt.review();
 
     return {
       id: attempt.id,
+      isReview: attempt.isReview,
       totalCount: review.totalCount,
       score: review.score,
       sourceTitle: review.sourceTitle,
@@ -54,6 +58,7 @@ export function getAttemptResult(
           explanation: item.quiz.explanation,
         },
       })),
+      wrongQuizIds: attempt.wrongQuizIds(),
     };
   } catch {
     return null;

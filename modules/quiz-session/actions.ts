@@ -7,3 +7,5 @@
 // ここが公開するのは 'use server' なファイルだけなので、
 // クライアントバンドルには「サーバーを呼ぶ参照」しか残らない。
 export { submitAnswerAction } from "./presentation/submit-answer";
+export { startReviewAction } from "./presentation/start-review";
+export type { StartReviewActionInput } from "./presentation/start-review";

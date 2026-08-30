@@ -8,6 +8,7 @@ import type { AttemptQuizData } from "../attempt-quiz";
 
 function quiz(answerIndex: number, label: string): AttemptQuizData {
   return {
+    quizId: `quiz-${label}`,
     text: `${label} の問題文`,
     choices: [`${label}-A`, `${label}-B`, `${label}-C`, `${label}-D`],
     answerIndex,
@@ -21,6 +22,7 @@ const OWNER_ID = "user-1";
 /** 正解が順に 0 / 1 / 2 の3問を持つ挑戦 */
 function startAttempt(): Attempt {
   return Attempt.start({
+    mode: "normal",
     ownerId: OWNER_ID,
     quizzes: [quiz(0, "Q1"), quiz(1, "Q2"), quiz(2, "Q3")],
     sourceTitle: "テスト記事",
@@ -61,6 +63,7 @@ describe("Attempt.start", () => {
     expectAppError(
       () =>
         Attempt.start({
+          mode: "normal",
           ownerId: "",
           quizzes: [quiz(0, "Q1")],
           sourceTitle: "テスト記事",
@@ -74,6 +77,7 @@ describe("Attempt.start", () => {
     expectAppError(
       () =>
         Attempt.start({
+          mode: "normal",
           ownerId: OWNER_ID,
           quizzes: [],
           sourceTitle: "テスト記事",
@@ -87,6 +91,7 @@ describe("Attempt.start", () => {
     expectAppError(
       () =>
         Attempt.start({
+          mode: "normal",
           ownerId: OWNER_ID,
           quizzes: [{ ...quiz(0, "Q1"), choices: ["A", "B"] }],
           sourceTitle: "テスト記事",

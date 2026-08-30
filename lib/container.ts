@@ -10,6 +10,7 @@ import { Container } from "inversify";
 // 依存するため、index.ts 経由だと循環 import になってしまう。
 import { analyticsContainerModule } from "@/modules/analytics/container";
 import { contentExtractionContainerModule } from "@/modules/content-extraction/container";
+import { quizCatalogContainerModule } from "@/modules/quiz-catalog/container";
 import { quizGenerationContainerModule } from "@/modules/quiz-generation/container";
 import { quizSessionContainerModule } from "@/modules/quiz-session/container";
 import { userContainerModule } from "@/modules/user/container";
@@ -19,6 +20,7 @@ function createContainer(): Container {
   container.load(
     analyticsContainerModule,
     contentExtractionContainerModule,
+    quizCatalogContainerModule,
     quizGenerationContainerModule,
     quizSessionContainerModule,
     userContainerModule,
