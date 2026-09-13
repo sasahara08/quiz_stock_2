@@ -4,7 +4,7 @@ import { RECENT_ATTEMPTS_LIMIT } from "@/lib/constants";
 import { AppError, type ErrorCode } from "@/lib/errors";
 import { AttemptRecord } from "../attempt-record";
 import { Dashboard } from "../dashboard";
-import { LearningSummary } from "../learning-summary";
+import { LearningSummary, type LearningSummaryData } from "../learning-summary";
 import { StudyCalendar } from "../study-calendar";
 
 const TODAY = new Date(2026, 7, 15);
@@ -31,9 +31,28 @@ function attempt(hoursAgo: number, score = 3): AttemptRecord {
   });
 }
 
+/**
+ * 今週ぶんの値を既定0で埋めるヘルパー。
+ * 各テストの関心は通算側の不変条件なので、今週は明示したいときだけ渡す。
+ */
+function summaryOf(
+  data: Omit<
+    LearningSummaryData,
+    "weeklyCreatedQuizCount" | "weeklyAnsweredCount" | "weeklyCorrectCount"
+  > &
+    Partial<LearningSummaryData>,
+): LearningSummary {
+  return LearningSummary.of({
+    weeklyCreatedQuizCount: 0,
+    weeklyAnsweredCount: 0,
+    weeklyCorrectCount: 0,
+    ...data,
+  });
+}
+
 describe("LearningSummary", () => {
   it("回答数と正解数から正答率を導出する", () => {
-    const summary = LearningSummary.of({
+    const summary = summaryOf({
       createdQuizCount: 10,
       answeredCount: 8,
       correctCount: 6,
@@ -43,7 +62,7 @@ describe("LearningSummary", () => {
   });
 
   it("未回答なら正答率は0になる（0除算しない）", () => {
-    const summary = LearningSummary.of({
+    const summary = summaryOf({
       createdQuizCount: 3,
       answeredCount: 0,
       correctCount: 0,
@@ -55,7 +74,7 @@ describe("LearningSummary", () => {
   it("正解数が回答数を超えたら受け付けない", () => {
     expectAppError(
       () =>
-        LearningSummary.of({
+        summaryOf({
           createdQuizCount: 10,
           answeredCount: 5,
           correctCount: 6,
@@ -68,7 +87,7 @@ describe("LearningSummary", () => {
   it("負の値は受け付けない", () => {
     expectAppError(
       () =>
-        LearningSummary.of({
+        summaryOf({
           createdQuizCount: -1,
           answeredCount: 0,
           correctCount: 0,
@@ -131,7 +150,7 @@ describe("AttemptRecord", () => {
 });
 
 describe("Dashboard", () => {
-  const summary = LearningSummary.of({
+  const summary = summaryOf({
     createdQuizCount: 10,
     answeredCount: 8,
     correctCount: 6,
@@ -173,7 +192,7 @@ describe("Dashboard", () => {
 
   it("クイズも挑戦もなければ空状態になる", () => {
     const dashboard = Dashboard.of({
-      summary: LearningSummary.of({
+      summary: summaryOf({
         createdQuizCount: 0,
         answeredCount: 0,
         correctCount: 0,

@@ -30,7 +30,10 @@ export class AttemptRecord {
       throw new AppError("VALIDATION_ERROR", "挑戦IDが空です");
     }
     if (!Number.isInteger(data.totalCount) || data.totalCount < 1) {
-      throw new AppError("VALIDATION_ERROR", `出題数が不正です: ${data.totalCount}`);
+      throw new AppError(
+        "VALIDATION_ERROR",
+        `出題数が不正です: ${data.totalCount}`,
+      );
     }
     if (!Number.isInteger(data.score) || data.score < 0) {
       throw new AppError("VALIDATION_ERROR", `正答数が不正です: ${data.score}`);
