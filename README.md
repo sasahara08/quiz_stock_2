@@ -23,6 +23,14 @@ npm run dev                 # http://localhost:3000
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier |
 
+`npx prisma generate` の生成物（`app/generated/prisma`）は `.gitignore` 対象。
+**clone 直後や `git pull` の後は必ず実行すること**（未生成だと `lib/prisma.ts` の
+import が解決できず、画面が 500 になる）。
+
+`localhost` 以外のホスト名で開発サーバーを開く場合は、`next.config.ts` の
+`allowedDevOrigins` にそのホストを追加する。未設定だと JS チャンクがブロックされ、
+画面は出るのに React が hydrate せず、フォームの送信ボタンが押せないままになる。
+
 DB は SQLite（リポジトリ直下の `dev.db`）。接続先は `DATABASE_URL` で上書きできる。
 既定値は `lib/prisma.ts` と `prisma.config.ts` の両方に書いてあり、**必ず揃えること**
 （ずれると CLI とアプリが別の DB を見る）。
