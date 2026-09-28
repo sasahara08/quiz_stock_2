@@ -14,7 +14,7 @@ import {
   StudyCalendar,
   type StudyRecord,
 } from "../domain/entities/study-calendar";
-import { toDateKey } from "../domain/rules/calendar-date";
+import { startOfWeek, toDateKey } from "../domain/rules/calendar-date";
 import type { DashboardRepository } from "../domain/ports/dashboard-repository";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -24,41 +24,61 @@ function calendarStart(today: Date): Date {
   return new Date(today.getTime() - STUDY_CALENDAR_MONTHS * 31 * MS_PER_DAY);
 }
 
+/** 今週（日曜始まり）の0時。週の区切りは芝生のグリッドに揃える */
+function weekStart(today: Date): Date {
+  const key = startOfWeek(toDateKey(today));
+  return new Date(
+    Number(key.slice(0, 4)),
+    Number(key.slice(5, 7)) - 1,
+    Number(key.slice(8, 10)),
+  );
+}
+
 @injectable()
 export class PrismaDashboardRepository implements DashboardRepository {
   async loadDashboard(userId: string): Promise<Dashboard> {
     const today = new Date();
+    const since = weekStart(today);
 
-    const [createdQuizCount, reviewCount, answerStats, studyRows, attemptRows] =
-      await Promise.all([
-        prisma.quiz.count({ where: { userId } }),
-        prisma.quiz.count({ where: { userId, lastIsCorrect: false } }),
-        prisma.answer.groupBy({
-          by: ["isCorrect"],
-          where: { attempt: { userId } },
-          _count: { _all: true },
-        }),
-        prisma.answer.findMany({
-          where: {
-            attempt: { userId },
-            answeredAt: { gte: calendarStart(today) },
-          },
-          select: { answeredAt: true },
-        }),
-        prisma.attempt.findMany({
-          where: { userId, finishedAt: { not: null } },
-          orderBy: { finishedAt: "desc" },
-          take: RECENT_ATTEMPTS_LIMIT,
-          include: { _count: { select: { attemptQuizzes: true } } },
-        }),
-      ]);
+    const [
+      createdQuizCount,
+      reviewCount,
+      answerStats,
+      studyRows,
+      attemptRows,
+      weeklyCreatedQuizCount,
+      weeklyAnswerStats,
+    ] = await Promise.all([
+      prisma.quiz.count({ where: { userId } }),
+      prisma.quiz.count({ where: { userId, lastIsCorrect: false } }),
+      prisma.answer.groupBy({
+        by: ["isCorrect"],
+        where: { attempt: { userId } },
+        _count: { _all: true },
+      }),
+      prisma.answer.findMany({
+        where: {
+          attempt: { userId },
+          answeredAt: { gte: calendarStart(today) },
+        },
+        select: { answeredAt: true },
+      }),
+      prisma.attempt.findMany({
+        where: { userId, finishedAt: { not: null } },
+        orderBy: { finishedAt: "desc" },
+        take: RECENT_ATTEMPTS_LIMIT,
+        include: { _count: { select: { attemptQuizzes: true } } },
+      }),
+      prisma.quiz.count({ where: { userId, createdAt: { gte: since } } }),
+      prisma.answer.groupBy({
+        by: ["isCorrect"],
+        where: { attempt: { userId }, answeredAt: { gte: since } },
+        _count: { _all: true },
+      }),
+    ]);
 
-    const correctCount =
-      answerStats.find((row) => row.isCorrect)?._count._all ?? 0;
-    const answeredCount = answerStats.reduce(
-      (sum, row) => sum + row._count._all,
-      0,
-    );
+    const { answeredCount, correctCount } = tallyAnswers(answerStats);
+    const weekly = tallyAnswers(weeklyAnswerStats);
 
     return Dashboard.of({
       summary: LearningSummary.of({
@@ -66,6 +86,9 @@ export class PrismaDashboardRepository implements DashboardRepository {
         answeredCount,
         correctCount,
         reviewCount,
+        weeklyCreatedQuizCount,
+        weeklyAnsweredCount: weekly.answeredCount,
+        weeklyCorrectCount: weekly.correctCount,
       }),
       calendar: StudyCalendar.of(toStudyRecords(studyRows), today),
       recentAttempts: attemptRows.map((row) =>
@@ -82,6 +105,16 @@ export class PrismaDashboardRepository implements DashboardRepository {
       ),
     });
   }
+}
+
+/** isCorrect ごとの件数を、回答数と正解数に畳み込む */
+function tallyAnswers(
+  rows: ReadonlyArray<{ isCorrect: boolean; _count: { _all: number } }>,
+): { answeredCount: number; correctCount: number } {
+  return {
+    answeredCount: rows.reduce((sum, row) => sum + row._count._all, 0),
+    correctCount: rows.find((row) => row.isCorrect)?._count._all ?? 0,
+  };
 }
 
 /** 回答の時刻の一覧を、日ごとの回答数に畳み込む */

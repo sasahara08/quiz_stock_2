@@ -4,6 +4,7 @@
 // 解説（explanation）はそもそもここまで渡ってこない。
 // 所有者以外には null を返す（GetAttemptUseCase が他人の挑戦を弾く）。
 import { container } from "@/lib/container";
+import { logServerError } from "@/lib/server-logger";
 import type { AttemptMode, AttemptStatus } from "../domain/entities/attempt";
 import type { QuestionForPlay } from "../domain/entities/attempt-quiz";
 import { GetAttemptUseCase } from "../use-cases/get-attempt";
@@ -37,7 +38,9 @@ export async function getAttemptForPlay(
       sourceTitle: attempt.sourceTitle,
       currentQuestion: attempt.currentQuestion,
     };
-  } catch {
+  } catch (err) {
+    // 画面には「見つかりません」としか出せないため、原因はここでコンソールに残す
+    logServerError("getAttemptForPlay", err);
     return null;
   }
 }

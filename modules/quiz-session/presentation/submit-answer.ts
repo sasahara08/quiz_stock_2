@@ -8,17 +8,23 @@
 // 誰の挑戦かはクライアントの申告ではなくセッションから決める。
 // attemptId だけで回答できると、他人の挑戦を進められてしまうため。
 import { z } from "zod";
-import type { ActionResult } from "@/lib/action-result";
+import { failure, failureOf, type ActionResult } from "@/lib/action-result";
 import { CHOICE_COUNT } from "@/lib/constants";
 import { container } from "@/lib/container";
-import { AppError, errorMessages } from "@/lib/errors";
 import { requireUserOrThrow } from "@/modules/user";
-import { SubmitAnswerUseCase, type SubmitAnswerResult } from "../use-cases/submit-answer";
+import {
+  SubmitAnswerUseCase,
+  type SubmitAnswerResult,
+} from "../use-cases/submit-answer";
 
 const inputSchema = z.object({
   attemptId: z.string().min(1),
   questionIndex: z.number().int().min(0),
-  selectedIndex: z.number().int().min(0).max(CHOICE_COUNT - 1),
+  selectedIndex: z
+    .number()
+    .int()
+    .min(0)
+    .max(CHOICE_COUNT - 1),
 });
 
 export async function submitAnswerAction(
@@ -26,10 +32,11 @@ export async function submitAnswerAction(
 ): Promise<ActionResult<SubmitAnswerResult>> {
   const parsed = inputSchema.safeParse(input);
   if (!parsed.success) {
-    return {
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: errorMessages.VALIDATION_ERROR },
-    };
+    return failureOf(
+      "submitAnswerAction",
+      "VALIDATION_ERROR",
+      "回答の入力が schema に合いません",
+    );
   }
 
   try {
@@ -43,15 +50,6 @@ export async function submitAnswerAction(
     );
     return { success: true, data: result };
   } catch (err) {
-    if (err instanceof AppError) {
-      return {
-        success: false,
-        error: { code: err.code, message: errorMessages[err.code] },
-      };
-    }
-    return {
-      success: false,
-      error: { code: "INTERNAL_ERROR", message: errorMessages.INTERNAL_ERROR },
-    };
+    return failure("submitAnswerAction", err);
   }
 }

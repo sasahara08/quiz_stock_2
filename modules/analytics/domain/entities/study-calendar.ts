@@ -7,6 +7,7 @@ import { AppError } from "@/lib/errors";
 import {
   assertDateKey,
   dateKeyOf,
+  shiftDays,
   daysInMonth,
   isSameMonth,
   shiftMonth,
@@ -55,7 +56,10 @@ export class StudyCalendar {
     private readonly today: string,
   ) {}
 
-  static of(records: readonly StudyRecord[], today: Date = new Date()): StudyCalendar {
+  static of(
+    records: readonly StudyRecord[],
+    today: Date = new Date(),
+  ): StudyCalendar {
     const counts = new Map<string, number>();
 
     for (const record of records) {
@@ -67,7 +71,10 @@ export class StudyCalendar {
         );
       }
       if (counts.has(record.date)) {
-        throw new AppError("VALIDATION_ERROR", `日付が重複しています: ${record.date}`);
+        throw new AppError(
+          "VALIDATION_ERROR",
+          `日付が重複しています: ${record.date}`,
+        );
       }
       counts.set(record.date, record.answerCount);
     }
@@ -82,6 +89,32 @@ export class StudyCalendar {
       if (count > 0) total += 1;
     }
     return total;
+  }
+
+  /**
+   * 現在の連続学習日数。
+   *
+   * 起点は「今日」だが、今日まだ答えていなくても昨日から数え始める。
+   * 今日はまだ終わっていないため、未回答というだけで記録を途切れさせない。
+   * 今日も昨日も0問なら、連続は途切れているので0を返す。
+   */
+  get currentStreak(): number {
+    const answered = (date: string) => (this.counts.get(date) ?? 0) > 0;
+
+    let cursor = answered(this.today) ? this.today : shiftDays(this.today, -1);
+    if (!answered(cursor)) return 0;
+
+    let streak = 0;
+    while (answered(cursor)) {
+      streak += 1;
+      cursor = shiftDays(cursor, -1);
+    }
+    return streak;
+  }
+
+  /** 今日はもう1問以上答えたか */
+  get hasStudiedToday(): boolean {
+    return (this.counts.get(this.today) ?? 0) > 0;
   }
 
   /** 今日が含まれる年月 */

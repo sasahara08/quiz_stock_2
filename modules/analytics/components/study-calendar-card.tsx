@@ -46,13 +46,31 @@ export function StudyCalendarCard({ study }: Props) {
             <Flame className="h-4 w-4" />
             <span className="text-xs font-medium">学習の記録</span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            通算{" "}
-            <span className="font-bold tabular-nums text-foreground">
-              {study.totalStudyDays}
-            </span>{" "}
-            日
-          </p>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            {study.currentStreak > 0 && (
+              <p
+                className={
+                  // 今日まだ答えていない日は、記録が途切れる手前だと分かるようにする
+                  study.hasStudiedToday
+                    ? "text-emerald-700 dark:text-emerald-400"
+                    : "text-amber-700 dark:text-amber-400"
+                }
+              >
+                <span className="font-bold tabular-nums">
+                  {study.currentStreak}
+                </span>
+                日連続
+                {!study.hasStudiedToday && "（今日はまだ）"}
+              </p>
+            )}
+            <p>
+              通算{" "}
+              <span className="font-bold tabular-nums text-foreground">
+                {study.totalStudyDays}
+              </span>{" "}
+              日
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center justify-between gap-2">
