@@ -1,6 +1,9 @@
 // プレゼンテーション層 - 問題一覧の絞り込み
 // 状態と記事で絞り込む。条件は URL のクエリパラメータに載せるため、
 // リンクとして表現する（クライアント側の状態を持たない）。
+//
+// 絞り込みを変えると page を引き継がず1ページ目に戻る。件数が変わるため、
+// 同じページ番号を保っても意味がなく、空のページに着地しかねないため。
 import Link from "next/link";
 import type { QuizStatus } from "../domain/entities/quiz";
 import type { QuizSourceOption } from "../api/get-quiz-list";

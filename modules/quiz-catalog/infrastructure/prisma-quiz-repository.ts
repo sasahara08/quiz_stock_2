@@ -108,6 +108,7 @@ export class PrismaQuizRepository implements QuizRepository {
       where: whereOf(userId, query),
       orderBy: orderCondition(query.order),
       ...(query.limit === undefined ? {} : { take: query.limit }),
+      ...(query.offset === undefined ? {} : { skip: query.offset }),
     });
     return rows.map(toEntity);
   }
