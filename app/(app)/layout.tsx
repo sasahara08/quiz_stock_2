@@ -11,8 +11,12 @@
 import Link from "next/link";
 import { LayoutDashboard } from "lucide-react";
 import { AppHeader } from "@/components/organisms/app-header";
+import { ThemeToggle } from "@/components/organisms/theme-toggle";
 import { UserMenu } from "@/components/organisms/user-menu";
-import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/atoms/dropdown-menu";
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/atoms/dropdown-menu";
 import { requireUser } from "@/modules/user";
 import { LogoutMenuItem } from "@/modules/user/components/logout-menu-item";
 
@@ -36,6 +40,10 @@ export default async function AppLayout({
                 ダッシュボード
               </Link>
             </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <ThemeToggle />
 
             <DropdownMenuSeparator />
 
