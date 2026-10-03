@@ -23,6 +23,14 @@ export const RECENT_ATTEMPTS_LIMIT = 5;
 export const STUDY_CALENDAR_MONTHS = 13;
 /** 芝生の濃さの段階数（0＝学習なし 〜 4＝最も多い）*/
 export const STUDY_LEVEL_MAX = 4;
+// --- 表示テーマ ---
+/**
+ * テーマ設定の保存先（localStorage のキー）。
+ * サーバーには持たせない。ログイン前後で一貫して効かせたいのと、
+ * 端末ごとに変えられるほうが自然なため。
+ */
+export const THEME_STORAGE_KEY = "quizstack-theme";
+
 // --- 認証 ---
 /** セッションクッキーの名前 */
 export const SESSION_COOKIE_NAME = "quizstack_session";

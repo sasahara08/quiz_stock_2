@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,7 +24,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* テーマの適用は hydrate を待てない。待つとダーク設定でも一瞬
+            ライトで描かれてちらつく。body の先頭に素の script を置き、
+            後続の要素が描かれる前にクラスを当てる。
+            next/script の beforeInteractive は src 付き向けで、
+            インラインでは HTML に出力されないため使えない。 */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript() }} />
+        {children}
+      </body>
     </html>
   );
 }
