@@ -4,9 +4,9 @@ import { Sparkles } from "lucide-react";
 import { getQuizListData } from "@/modules/quiz-catalog";
 import { QuizFilters } from "@/modules/quiz-catalog/components/quiz-filters";
 import { QuizList } from "@/modules/quiz-catalog/components/quiz-list";
+import { QuizPagination } from "@/modules/quiz-catalog/components/quiz-pagination";
 import { SourceReviewLinks } from "@/modules/quiz-catalog/components/source-review-links";
 import { requireUser } from "@/modules/user";
-import { QUIZ_LIST_PAGE_SIZE } from "@/lib/constants";
 import { Button } from "@/components/atoms/button";
 import type { QuizStatus } from "@/modules/quiz-catalog";
 
@@ -20,10 +20,16 @@ function parseStatus(raw: string | undefined): QuizStatus | "all" {
     : "all";
 }
 
+/** ページ番号は外部入力。数値でなければ1ページ目として扱う（Page が範囲も丸める） */
+function parsePage(raw: string | undefined): number {
+  const page = Number(raw);
+  return Number.isInteger(page) ? page : 1;
+}
+
 export default async function QuizzesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; source?: string }>;
+  searchParams: Promise<{ status?: string; source?: string; page?: string }>;
 }) {
   const params = await searchParams;
   const user = await requireUser();
@@ -31,12 +37,10 @@ export default async function QuizzesPage({
   const status = parseStatus(params.status);
   const sourceUrl = params.source ?? null;
 
-  // 件数が増えても1画面に全部出さない。ページングは未実装のため、
-  // まずは新しい順に上限まで表示する
   const data = await getQuizListData(user.id, {
     ...(status === "all" ? {} : { status }),
     ...(sourceUrl ? { sourceUrl } : {}),
-    limit: QUIZ_LIST_PAGE_SIZE,
+    page: parsePage(params.page),
   });
 
   // 記事で絞り込んでいるときだけ、その記事の復習導線を出す
@@ -96,19 +100,28 @@ export default async function QuizzesPage({
           )}
 
           <p className="text-xs text-muted-foreground">
-            {data.filteredCount > data.items.length ? (
+            {data.page.isPaginated ? (
               <>
-                <span className="tabular-nums">{data.filteredCount}</span>件中、
-                新しい<span className="tabular-nums">{data.items.length}</span>件を表示
+                <span className="tabular-nums">{data.filteredCount}</span>件中{" "}
+                <span className="tabular-nums">{data.page.firstIndex}</span>〜
+                <span className="tabular-nums">{data.page.lastIndex}</span>
+                件目を表示
               </>
             ) : (
               <>
-                <span className="tabular-nums">{data.filteredCount}</span>件を表示
+                <span className="tabular-nums">{data.filteredCount}</span>
+                件を表示
               </>
             )}
           </p>
 
           <QuizList items={data.items} />
+
+          <QuizPagination
+            page={data.page}
+            status={status}
+            sourceUrl={sourceUrl}
+          />
         </main>
       )}
     </div>

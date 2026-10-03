@@ -14,6 +14,8 @@ export type QuizQuery = {
   status?: QuizStatus;
   sourceUrl?: string;
   limit?: number;
+  /** 取得開始位置（0始まり）。ページ送りで使う */
+  offset?: number;
   order?: QuizOrder;
 };
 
