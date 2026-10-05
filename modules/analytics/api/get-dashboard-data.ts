@@ -6,6 +6,7 @@
 import { STUDY_CALENDAR_MONTHS } from "@/lib/constants";
 import { container } from "@/lib/container";
 import { formatRelativeTime } from "@/lib/relative-time";
+import type { NextAction } from "../domain/entities/dashboard";
 import { GetDashboardUseCase } from "../use-cases/get-dashboard";
 
 export type StudyCellView = {
@@ -40,14 +41,24 @@ export type AttemptSummaryView = {
 
 export type DashboardView = {
   isEmpty: boolean;
+  /** 画面最上部に出す「次の一手」。判断はドメインが済ませている */
+  nextAction: NextAction;
   summary: {
     createdQuizCount: number;
     accuracyPercent: number;
     answeredCount: number;
     reviewCount: number;
+    /** 今週（日曜始まり）の数字。通算だけだと変化が見えないため併記する */
+    weeklyCreatedQuizCount: number;
+    weeklyAccuracyPercent: number;
+    weeklyAnsweredCount: number;
+    hasNoWeeklyAnswer: boolean;
   };
   study: {
     totalStudyDays: number;
+    /** 現在の連続学習日数 */
+    currentStreak: number;
+    hasStudiedToday: boolean;
     /** 古い順。末尾が当月 */
     months: MonthlyStudyView[];
   };
@@ -61,14 +72,21 @@ export async function getDashboardData(userId: string): Promise<DashboardView> {
 
   return {
     isEmpty: dashboard.isEmpty,
+    nextAction: dashboard.nextAction,
     summary: {
       createdQuizCount: dashboard.summary.createdQuizCount,
       accuracyPercent: dashboard.summary.accuracyPercent,
       answeredCount: dashboard.summary.answeredCount,
       reviewCount: dashboard.summary.reviewCount,
+      weeklyCreatedQuizCount: dashboard.summary.weeklyCreatedQuizCount,
+      weeklyAccuracyPercent: dashboard.summary.weeklyAccuracyPercent,
+      weeklyAnsweredCount: dashboard.summary.weeklyAnsweredCount,
+      hasNoWeeklyAnswer: dashboard.summary.hasNoWeeklyAnswer,
     },
     study: {
       totalStudyDays: dashboard.calendar.totalStudyDays,
+      currentStreak: dashboard.calendar.currentStreak,
+      hasStudiedToday: dashboard.calendar.hasStudiedToday,
       months: dashboard.calendar
         .recentMonths(STUDY_CALENDAR_MONTHS)
         .map((month) => ({

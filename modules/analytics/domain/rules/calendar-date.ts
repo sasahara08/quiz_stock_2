@@ -26,7 +26,10 @@ export function toDateKey(date: Date): string {
 
 export function yearMonthOf(dateKey: string): YearMonth {
   assertDateKey(dateKey);
-  return { year: Number(dateKey.slice(0, 4)), month: Number(dateKey.slice(5, 7)) };
+  return {
+    year: Number(dateKey.slice(0, 4)),
+    month: Number(dateKey.slice(5, 7)),
+  };
 }
 
 export function daysInMonth({ year, month }: YearMonth): number {
@@ -44,7 +47,10 @@ export function dateKeyOf({ year, month }: YearMonth, day: number): string {
 }
 
 /** offset ヶ月ずらした年月を返す（負数で過去へ）*/
-export function shiftMonth({ year, month }: YearMonth, offset: number): YearMonth {
+export function shiftMonth(
+  { year, month }: YearMonth,
+  offset: number,
+): YearMonth {
   const shifted = new Date(year, month - 1 + offset, 1);
   return { year: shifted.getFullYear(), month: shifted.getMonth() + 1 };
 }
@@ -52,4 +58,29 @@ export function shiftMonth({ year, month }: YearMonth, offset: number): YearMont
 /** 同じ年月かを判定する */
 export function isSameMonth(a: YearMonth, b: YearMonth): boolean {
   return a.year === b.year && a.month === b.month;
+}
+
+/** offset 日ずらした日付キーを返す（負数で過去へ）*/
+export function shiftDays(dateKey: string, offset: number): string {
+  assertDateKey(dateKey);
+  const date = new Date(
+    Number(dateKey.slice(0, 4)),
+    Number(dateKey.slice(5, 7)) - 1,
+    Number(dateKey.slice(8, 10)) + offset,
+  );
+  return toDateKey(date);
+}
+
+/**
+ * その日が属する週の初日（日曜）を返す。
+ * 芝生のグリッドが日曜始まりなので、「今週」の区切りもそこに揃える。
+ */
+export function startOfWeek(dateKey: string): string {
+  assertDateKey(dateKey);
+  const date = new Date(
+    Number(dateKey.slice(0, 4)),
+    Number(dateKey.slice(5, 7)) - 1,
+    Number(dateKey.slice(8, 10)),
+  );
+  return shiftDays(dateKey, -date.getDay());
 }

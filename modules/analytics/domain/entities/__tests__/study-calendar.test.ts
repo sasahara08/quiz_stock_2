@@ -97,12 +97,16 @@ describe("StudyCalendar#monthOf", () => {
   it("他の月の記録を混ぜない", () => {
     const august = calendar.monthOf({ year: 2026, month: 8 });
     expect(august.studyDayCount).toBe(2);
-    expect(august.cells.every((cell) => cell.date.startsWith("2026-08"))).toBe(true);
+    expect(august.cells.every((cell) => cell.date.startsWith("2026-08"))).toBe(
+      true,
+    );
   });
 
   it("今日のマスにだけ isToday を立てる", () => {
     const cells = calendar.monthOf({ year: 2026, month: 8 }).cells;
-    expect(cells.filter((cell) => cell.isToday).map((cell) => cell.day)).toEqual([15]);
+    expect(
+      cells.filter((cell) => cell.isToday).map((cell) => cell.day),
+    ).toEqual([15]);
   });
 
   it("今日を含まない月には isToday のマスがない", () => {

@@ -6,6 +6,7 @@
 // バンドルに引き込まれてしまう（このモジュールにクライアント向けのAPIはない）。
 export { getDashboardData } from "./api/get-dashboard-data";
 export { analyticsContainerModule } from "./container";
+export type { NextAction } from "./domain/entities/dashboard";
 export type {
   DashboardView,
   MonthlyStudyView,

@@ -5,6 +5,7 @@
 // 所有者以外には null を返す（GetAttemptUseCase が他人の挑戦を弾く）。
 // 完了済みの挑戦のみが対象なので、正解・解説を含めても安全。
 import { container } from "@/lib/container";
+import { logServerError } from "@/lib/server-logger";
 import { GetAttemptUseCase } from "../use-cases/get-attempt";
 
 export type AttemptResultItem = {
@@ -60,7 +61,9 @@ export async function getAttemptResult(
       })),
       wrongQuizIds: attempt.wrongQuizIds(),
     };
-  } catch {
+  } catch (err) {
+    // 画面には「見つかりません」としか出せないため、原因はここでコンソールに残す
+    logServerError("getAttemptResult", err);
     return null;
   }
 }

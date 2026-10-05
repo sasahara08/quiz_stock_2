@@ -23,6 +23,12 @@ export const RECENT_ATTEMPTS_LIMIT = 5;
 export const STUDY_CALENDAR_MONTHS = 13;
 /** 芝生の濃さの段階数（0＝学習なし 〜 4＝最も多い）*/
 export const STUDY_LEVEL_MAX = 4;
+/**
+ * ダッシュボードの「次の一手」から始める復習の出題数。
+ * 1クリックで始められることを優先し、問数は選ばせない。
+ * 選びたいときは /review へ誘導する。
+ */
+export const DASHBOARD_REVIEW_SIZE = 10;
 // --- 認証 ---
 /** セッションクッキーの名前 */
 export const SESSION_COOKIE_NAME = "quizstack_session";

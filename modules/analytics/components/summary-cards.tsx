@@ -1,5 +1,8 @@
 // プレゼンテーション層 - サマリー統計
 // 通算の数値をカードで並べる。数字を主役にし、装飾は最小限にとどめる。
+//
+// 通算だけだと使い込むほど数字が動かなくなり、直近の変化が見えない。
+// そのため各カードに今週の数字を小さく併記する。
 import { FileQuestion, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/atoms/card";
 import type { DashboardView } from "../api/get-dashboard-data";
@@ -16,13 +19,23 @@ export function SummaryCards({ summary }: Props) {
         label="作成したクイズ"
         value={summary.createdQuizCount.toLocaleString("ja-JP")}
         unit="問"
+        note={
+          summary.weeklyCreatedQuizCount > 0
+            ? `今週 +${summary.weeklyCreatedQuizCount.toLocaleString("ja-JP")}問`
+            : "今週の作成はまだありません"
+        }
       />
       <SummaryCard
         icon={<Target className="h-4 w-4" />}
         label="通算正答率"
         value={`${summary.accuracyPercent}`}
         unit="%"
-        note={`${summary.answeredCount.toLocaleString("ja-JP")}問に回答`}
+        note={
+          // 今週0問のときに「今週 0%」と出すと、成績が悪いように見えてしまう
+          summary.hasNoWeeklyAnswer
+            ? `${summary.answeredCount.toLocaleString("ja-JP")}問に回答・今週はまだ未回答`
+            : `今週 ${summary.weeklyAccuracyPercent}%（${summary.weeklyAnsweredCount.toLocaleString("ja-JP")}問）`
+        }
       />
     </div>
   );

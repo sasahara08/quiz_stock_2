@@ -1,9 +1,8 @@
 "use server";
 // プレゼンテーション層
 // 新規登録の Server Action。成功するとそのままログイン状態になる。
-import type { ActionResult } from "@/lib/action-result";
+import { failure, failureOf, type ActionResult } from "@/lib/action-result";
 import { container } from "@/lib/container";
-import { AppError, errorMessages } from "@/lib/errors";
 import type { PublicUser } from "../domain/entities/user";
 import { writeSessionToken } from "../infrastructure/session-cookie";
 import { registerInputSchema, type RegisterInput } from "../schema";
@@ -14,10 +13,11 @@ export async function registerAction(
 ): Promise<ActionResult<PublicUser>> {
   const parsed = registerInputSchema.safeParse(input);
   if (!parsed.success) {
-    return {
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: errorMessages.VALIDATION_ERROR },
-    };
+    return failureOf(
+      "registerAction",
+      "VALIDATION_ERROR",
+      "登録フォームの入力が schema に合いません",
+    );
   }
 
   try {
@@ -26,15 +26,6 @@ export async function registerAction(
     await writeSessionToken(sessionToken);
     return { success: true, data: user.toPublic() };
   } catch (err) {
-    if (err instanceof AppError) {
-      return {
-        success: false,
-        error: { code: err.code, message: errorMessages[err.code] },
-      };
-    }
-    return {
-      success: false,
-      error: { code: "INTERNAL_ERROR", message: errorMessages.INTERNAL_ERROR },
-    };
+    return failure("registerAction", err);
   }
 }

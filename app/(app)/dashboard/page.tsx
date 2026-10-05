@@ -3,10 +3,12 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { getDashboardData } from "@/modules/analytics";
 import { CatalogLinks } from "@/modules/analytics/components/catalog-links";
+import { NextActionCard } from "@/modules/analytics/components/next-action-card";
 import { DashboardEmpty } from "@/modules/analytics/components/dashboard-empty";
 import { RecentAttempts } from "@/modules/analytics/components/recent-attempts";
 import { StudyCalendarCard } from "@/modules/analytics/components/study-calendar-card";
 import { SummaryCards } from "@/modules/analytics/components/summary-cards";
+import { StartReviewButton } from "@/modules/quiz-session/components/start-review-button";
 import { requireUser } from "@/modules/user";
 import { Button } from "@/components/atoms/button";
 
@@ -25,18 +27,39 @@ export default async function DashboardPage() {
             {user.name} さんの学習状況
           </p>
         </div>
-        <Button asChild size="lg" className="shrink-0 gap-2">
-          <Link href="/">
-            <Sparkles className="h-4 w-4" />
-            クイズを作る
-          </Link>
-        </Button>
+        {/* 「次の一手」がクイズ作成を出しているときは、同じボタンが2つ並んで
+            主役が分からなくなる。その場合はカードに譲ってここでは出さない。 */}
+        {data.nextAction.kind === "review" && (
+          <Button asChild variant="outline" className="shrink-0 gap-2">
+            <Link href="/">
+              <Sparkles className="h-4 w-4" />
+              クイズを作る
+            </Link>
+          </Button>
+        )}
       </header>
 
       {data.isEmpty ? (
         <DashboardEmpty />
       ) : (
         <main className="flex flex-col gap-8">
+          {/* 「何をすべきか」は analytics が判断し、開始手段は quiz-session が持つ。
+              両者を結び付けるのはページの役割で、どちらのモジュールも相手を知らない。 */}
+          <NextActionCard action={data.nextAction}>
+            {data.nextAction.kind === "review" ? (
+              <StartReviewButton
+                questionCount={data.nextAction.questionCount}
+              />
+            ) : (
+              <Button asChild size="lg" className="gap-2">
+                <Link href="/">
+                  <Sparkles className="h-4 w-4" />
+                  クイズを作る
+                </Link>
+              </Button>
+            )}
+          </NextActionCard>
+
           <SummaryCards summary={data.summary} />
 
           <CatalogLinks
