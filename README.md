@@ -32,6 +32,19 @@ import が解決できず、画面が 500 になる）。
 `allowedDevOrigins` にそのホストを追加する。未設定だと JS チャンクがブロックされ、
 画面は出るのに React が hydrate せず、フォームの送信ボタンが押せないままになる。
 
+環境変数はすべて省略可能。雛形は [`.env.example`](.env.example) にある
+（使うときは `.env` にコピーする）。**未設定ならモック・ローカルDBで動く。**
+
+| 変数 | 既定 | 内容 |
+|---|---|---|
+| `DATABASE_URL` | `file:./dev.db` | SQLite の接続先 |
+| `USE_REAL_CONTENT_EXTRACTOR` | 未設定（=モック） | `true` で実際にページを取得して本文を抽出する |
+
+**実装の差し替えは環境変数で行い、既定は必ずモック側にする。** 設定を忘れた環境が
+勝手に外部へアクセスしたり、課金の発生する API を叩いたりしないため。
+解釈できない値（`ture` など）を入れると起動時にエラーになる。綴り間違いを黙って
+既定値に丸めると、本実装のつもりでモックが動き続けてしまうため。
+
 DB は SQLite（リポジトリ直下の `dev.db`）。接続先は `DATABASE_URL` で上書きできる。
 既定値は `lib/prisma.ts` と `prisma.config.ts` の両方に書いてあり、**必ず揃えること**
 （ずれると CLI とアプリが別の DB を見る）。
@@ -80,7 +93,7 @@ docs/spec.md               現行仕様書
 | モジュール | 責務 | 主なエンティティ | 実装 |
 |---|---|---|---|
 | `user` | 登録・認証・セッション | `User` `Session` `RawPassword` | 本実装（scrypt + DB） |
-| `content-extraction` | URLから本文を抽出 | `ExtractedContent` | **モック**（ネットワーク未使用） |
+| `content-extraction` | URLから本文を抽出 | `ExtractedContent` | モック / 本実装（env で切替） |
 | `quiz-generation` | 抽出結果からクイズを生成 | `QuizItem` | **モック**（3問固定） |
 | `quiz-catalog` | クイズの保管・検索・正誤状態 | `Quiz` `GenerationBatch` | 本実装（DB） |
 | `quiz-session` | 出題・回答・採点 | `Attempt` `AttemptQuiz` `Answer` | 本実装（DB） |
@@ -166,7 +179,8 @@ quiz-session    ──→ quiz-catalog         出題対象を引く / 正誤を
 ### DI（依存の結線）
 
 ポートと実装の結び付けは各モジュールの `container.ts` の1箇所だけ。
-モックを本実装に差し替えるときは **bind 先を変えるだけ**で済むようにする。
+モックと本実装の切り替えは、その `container.ts` の中で環境変数を見て決める
+（env の読み取りは `lib/env.ts` に集約し、フラグ名は `ENV_FLAGS` に並べる）。
 全モジュールのコンテナは `lib/container.ts` で束ねる。
 
 ### エラー
@@ -188,7 +202,7 @@ Server Action は例外を throw せず、必ず `ActionResult<T>`（成功/失�
 
 | 項目 | 現状 |
 |---|---|
-| 本文抽出がモック | HTTP取得と Readability の実装はあるが未接続・未検証 |
+| 本文抽出の本実装が未検証 | 結線済み（`USE_REAL_CONTENT_EXTRACTOR=true`）だが、実ページでの動作は未確認 |
 | クイズ生成がモック | プロンプトと出力スキーマは用意済み・未接続。常に3問 |
 | `analytics` が他モジュールのテーブルを直接読む | 読み取り専用の集計ビューとしての意図的な例外。書き込みはしない |
 | 復習の判定が単純 | 「間違えたまま」のみ。まぐれ正解で対象から外れる（`docs/spec.md` 第5章） |

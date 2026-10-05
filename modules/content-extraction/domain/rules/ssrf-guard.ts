@@ -21,8 +21,7 @@ export function isPrivateIp(ip: string): boolean {
   if (net.isIPv6(ip)) {
     const normalized = ip.toLowerCase();
     if (normalized === "::1") return true;
-    if (normalized.startsWith("fc") || normalized.startsWith("fd"))
-      return true;
+    if (normalized.startsWith("fc") || normalized.startsWith("fd")) return true;
     if (normalized.startsWith("fe80")) return true;
     return false;
   }
