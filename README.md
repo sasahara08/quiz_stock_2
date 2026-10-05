@@ -4,6 +4,7 @@
 間違えた問題は復習対象として溜まり、あとからまとめて解き直せる。
 
 - **現行仕様**: [`docs/spec.md`](docs/spec.md)（画面・ルール・未実装項目の正）
+- **技術選定の記録**: [`docs/technology-decisions.md`](docs/technology-decisions.md)（選んだ理由と、選ばなかった理由）
 - **フェーズ1の実装指示書**: [`init.md`](init.md)（凍結。現状とは一致しない）
 
 ## セットアップ
