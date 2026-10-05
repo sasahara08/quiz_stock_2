@@ -7,6 +7,9 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    // 開発用のシード。npx prisma db seed で実行する。
+    // TypeScript のまま走らせるため tsx を使う（パスエイリアスも解決される）
+    seed: "tsx prisma/seed.ts",
   },
   datasource: {
     // 既定値は lib/prisma.ts と揃えること。ずれると CLI とアプリが別のDBを見てしまう。
