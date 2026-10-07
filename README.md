@@ -13,6 +13,7 @@
 npm install
 npx prisma migrate deploy   # dev.db にスキーマを適用
 npx prisma generate
+npx prisma db seed          # 開発用データの投入（任意）
 npm run dev                 # http://localhost:3000
 ```
 
@@ -23,6 +24,7 @@ npm run dev                 # http://localhost:3000
 | `npm test` | ユニットテスト（vitest） |
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier |
+| `npx prisma db seed` | 開発用データの投入 |
 
 `npx prisma generate` の生成物（`app/generated/prisma`）は `.gitignore` 対象。
 **clone 直後や `git pull` の後は必ず実行すること**（未生成だと `lib/prisma.ts` の
@@ -31,6 +33,18 @@ import が解決できず、画面が 500 になる）。
 `localhost` 以外のホスト名で開発サーバーを開く場合は、`next.config.ts` の
 `allowedDevOrigins` にそのホストを追加する。未設定だと JS チャンクがブロックされ、
 画面は出るのに React が hydrate せず、フォームの送信ボタンが押せないままになる。
+
+### 開発用データ
+
+`npx prisma db seed` で、画面の確認に必要な量のデータを投入できる
+（15記事 / 45問 / 復習待ち14問 / 挑戦15件）。
+ページ送り・絞り込み・復習待ち・ダッシュボードの集計を、手で作らずに確認できる。
+
+| | |
+|---|---|
+| ログイン | `demo@example.com` / `demo12345` |
+| 投入先 | 上記のデモユーザーのみ。他のユーザーには触れない |
+| 再実行 | 何度流しても同じ状態になる（毎回そのユーザーのデータを作り直す） |
 
 DB は SQLite（リポジトリ直下の `dev.db`）。接続先は `DATABASE_URL` で上書きできる。
 既定値は `lib/prisma.ts` と `prisma.config.ts` の両方に書いてあり、**必ず揃えること**
