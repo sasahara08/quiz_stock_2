@@ -1,0 +1,63 @@
+name: Claude Auto PR
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  claude:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: |
+      github.event.label.name == 'feature' ||
+      github.event.label.name == 'bug' ||
+      github.event.label.name == 'documentation'
+
+    steps:
+      # gitのソースコードを取得
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # claude操作
+      - name: Run Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          show_full_output: true
+          claude_args: |
+            --allowedTools Read
+            --allowedTools Edit
+            --allowedTools Write
+            --allowedTools "Bash(git:*)"
+            --allowedTools "Bash(gh:*)"
+            --allowedTools "Bash(npm:*)"
+          prompt: |
+            現在トリガーされたIssue情報は
+            GitHub Event Context に含まれています。
+            新たに issue list を取得せず、
+            現在のIssueのみを対象に実装しPRを作成してください。
+
+            必ず守ること:
+            - ブランチ名は `feature/<issue番号>` とする
+            - 例: feature/123
+            - 変更は最小限に留める
+            - 不明点があり実装を行えない場合、不明点をissueにコメントを残すこと。
+
+            実施内容:
+            - 要件を整理
+            - ドキュメントの更新が必要であればドキュメントを更新
+            - 必要なコードを実装
+            - 既存コードとの整合性を確認
+
+            PR作成時:
+            - PR本文に `Closes #<issue番号>` を記載
+            - 変更内容と理由を説明
+            - ドキュメントに更新があればPRに記載
