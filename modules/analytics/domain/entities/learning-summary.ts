@@ -14,6 +14,8 @@ export type LearningSummaryData = {
   correctCount: number;
   /** 最後に答えて間違えたままの問題数（復習待ち）*/
   reviewCount: number;
+  /** まだ一度も答えていない問題数 */
+  unansweredCount: number;
   /** 今週（日曜始まり）に作ったクイズ数 */
   weeklyCreatedQuizCount: number;
   /** 今週に回答した問題数 */
@@ -28,6 +30,7 @@ export class LearningSummary {
     readonly answeredCount: number,
     readonly correctCount: number,
     readonly reviewCount: number,
+    readonly unansweredCount: number,
     readonly weeklyCreatedQuizCount: number,
     readonly weeklyAnsweredCount: number,
     readonly weeklyCorrectCount: number,
@@ -39,6 +42,7 @@ export class LearningSummary {
       ["回答数", data.answeredCount],
       ["正解数", data.correctCount],
       ["復習待ち数", data.reviewCount],
+      ["未回答数", data.unansweredCount],
       ["今週の作成クイズ数", data.weeklyCreatedQuizCount],
       ["今週の回答数", data.weeklyAnsweredCount],
       ["今週の正解数", data.weeklyCorrectCount],
@@ -58,6 +62,19 @@ export class LearningSummary {
       throw new AppError(
         "VALIDATION_ERROR",
         `復習待ち数が作成クイズ数を超えています: ${data.reviewCount} > ${data.createdQuizCount}`,
+      );
+    }
+    if (data.unansweredCount > data.createdQuizCount) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        `未回答数が作成クイズ数を超えています: ${data.unansweredCount} > ${data.createdQuizCount}`,
+      );
+    }
+    // 復習待ち（間違えたまま）と未回答は排他。合計が作成数を超えるのは集計の誤り
+    if (data.reviewCount + data.unansweredCount > data.createdQuizCount) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        `復習待ちと未回答の合計が作成クイズ数を超えています: ${data.reviewCount} + ${data.unansweredCount} > ${data.createdQuizCount}`,
       );
     }
 
@@ -86,6 +103,7 @@ export class LearningSummary {
       data.answeredCount,
       data.correctCount,
       data.reviewCount,
+      data.unansweredCount,
       data.weeklyCreatedQuizCount,
       data.weeklyAnsweredCount,
       data.weeklyCorrectCount,
@@ -114,6 +132,11 @@ export class LearningSummary {
   /** 復習すべき問題が残っているか */
   get needsReview(): boolean {
     return this.reviewCount > 0;
+  }
+
+  /** まだ手を付けていない問題が残っているか */
+  get hasUnanswered(): boolean {
+    return this.unansweredCount > 0;
   }
 
   /** まだ一度もクイズを作っていないか */

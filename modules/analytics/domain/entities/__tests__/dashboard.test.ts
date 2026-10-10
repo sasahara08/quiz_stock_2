@@ -38,11 +38,15 @@ function attempt(hoursAgo: number, score = 3): AttemptRecord {
 function summaryOf(
   data: Omit<
     LearningSummaryData,
-    "weeklyCreatedQuizCount" | "weeklyAnsweredCount" | "weeklyCorrectCount"
+    | "unansweredCount"
+    | "weeklyCreatedQuizCount"
+    | "weeklyAnsweredCount"
+    | "weeklyCorrectCount"
   > &
     Partial<LearningSummaryData>,
 ): LearningSummary {
   return LearningSummary.of({
+    unansweredCount: 0,
     weeklyCreatedQuizCount: 0,
     weeklyAnsweredCount: 0,
     weeklyCorrectCount: 0,
@@ -202,5 +206,45 @@ describe("Dashboard", () => {
       recentAttempts: [],
     });
     expect(dashboard.isEmpty).toBe(true);
+  });
+});
+
+describe("LearningSummary#hasUnanswered", () => {
+  it("未回答が1問でもあれば true", () => {
+    expect(
+      summaryOf({
+        createdQuizCount: 10,
+        answeredCount: 5,
+        correctCount: 5,
+        reviewCount: 0,
+        unansweredCount: 5,
+      }).hasUnanswered,
+    ).toBe(true);
+  });
+
+  it("未回答が0なら false", () => {
+    expect(
+      summaryOf({
+        createdQuizCount: 10,
+        answeredCount: 10,
+        correctCount: 10,
+        reviewCount: 0,
+        unansweredCount: 0,
+      }).hasUnanswered,
+    ).toBe(false);
+  });
+
+  it("復習待ちと未回答の合計が作成数を超えたら受け付けない", () => {
+    expectAppError(
+      () =>
+        summaryOf({
+          createdQuizCount: 10,
+          answeredCount: 5,
+          correctCount: 2,
+          reviewCount: 6,
+          unansweredCount: 6,
+        }),
+      "VALIDATION_ERROR",
+    );
   });
 });
