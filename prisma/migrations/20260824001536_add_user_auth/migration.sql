@@ -30,11 +30,11 @@ PRAGMA foreign_keys=on;
 PRAGMA defer_foreign_keys=ON;
 PRAGMA foreign_keys=OFF;
 CREATE TABLE "new_sessions" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "tokenHash" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "expiresAt" DATETIME NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "id" TEXT NOT NULL PRIMARY KEY, -- セッションID
+    "tokenHash" TEXT NOT NULL, -- セッショントークンのSHA-256ハッシュ（16進）。トークン本体は保存しない
+    "userId" TEXT NOT NULL, -- ユーザーID
+    "expiresAt" DATETIME NOT NULL, -- 有効期限
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 作成日時
     CONSTRAINT "sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 INSERT INTO "new_sessions" ("id", "userId") SELECT "id", "userId" FROM "sessions";
@@ -44,11 +44,11 @@ CREATE UNIQUE INDEX "sessions_tokenHash_key" ON "sessions"("tokenHash");
 CREATE INDEX "sessions_userId_idx" ON "sessions"("userId");
 CREATE INDEX "sessions_expiresAt_idx" ON "sessions"("expiresAt");
 CREATE TABLE "new_users" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "email" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "passwordHash" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "id" TEXT NOT NULL PRIMARY KEY, -- ユーザーID
+    "email" TEXT NOT NULL, -- メールアドレス（正規化済み・小文字/前後空白除去）
+    "name" TEXT NOT NULL, -- 表示名
+    "passwordHash" TEXT NOT NULL, -- パスワードのハッシュ（scrypt）。平文パスワードは保存しない
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP -- 登録日時
 );
 INSERT INTO "new_users" ("createdAt", "email", "id", "name") SELECT "createdAt", "email", "id", "name" FROM "users";
 DROP TABLE "users";
