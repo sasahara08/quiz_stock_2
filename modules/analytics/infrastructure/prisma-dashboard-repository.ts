@@ -43,6 +43,7 @@ export class PrismaDashboardRepository implements DashboardRepository {
     const [
       createdQuizCount,
       reviewCount,
+      unansweredCount,
       answerStats,
       studyRows,
       attemptRows,
@@ -51,6 +52,8 @@ export class PrismaDashboardRepository implements DashboardRepository {
     ] = await Promise.all([
       prisma.quiz.count({ where: { userId } }),
       prisma.quiz.count({ where: { userId, lastIsCorrect: false } }),
+      // 未回答は「一度も答えていない」。lastIsCorrect が null のもの
+      prisma.quiz.count({ where: { userId, lastIsCorrect: null } }),
       prisma.answer.groupBy({
         by: ["isCorrect"],
         where: { attempt: { userId } },
@@ -86,6 +89,7 @@ export class PrismaDashboardRepository implements DashboardRepository {
         answeredCount,
         correctCount,
         reviewCount,
+        unansweredCount,
         weeklyCreatedQuizCount,
         weeklyAnsweredCount: weekly.answeredCount,
         weeklyCorrectCount: weekly.correctCount,

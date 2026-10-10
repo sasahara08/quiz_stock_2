@@ -48,6 +48,7 @@ export type DashboardView = {
     accuracyPercent: number;
     answeredCount: number;
     reviewCount: number;
+    unansweredCount: number;
     /** 今週（日曜始まり）の数字。通算だけだと変化が見えないため併記する */
     weeklyCreatedQuizCount: number;
     weeklyAccuracyPercent: number;
@@ -78,6 +79,7 @@ export async function getDashboardData(userId: string): Promise<DashboardView> {
       accuracyPercent: dashboard.summary.accuracyPercent,
       answeredCount: dashboard.summary.answeredCount,
       reviewCount: dashboard.summary.reviewCount,
+      unansweredCount: dashboard.summary.unansweredCount,
       weeklyCreatedQuizCount: dashboard.summary.weeklyCreatedQuizCount,
       weeklyAccuracyPercent: dashboard.summary.weeklyAccuracyPercent,
       weeklyAnsweredCount: dashboard.summary.weeklyAnsweredCount,

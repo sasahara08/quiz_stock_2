@@ -12,11 +12,17 @@ import type { StudyCalendar } from "./study-calendar";
 
 /**
  * ダッシュボードが提示する「次の一手」。
+ *
+ * 優先順位は 復習 → 未回答 → 新規作成。
  * 復習待ちが1問でもあれば、今日すでに学習済みかに関わらず復習を最優先する。
  * 判断材料を増やさず、画面の振る舞いを予測しやすく保つため。
+ *
+ * 未回答を挟むのは、作ったまま解いていない問題があるのに
+ * 「新しく作れ」と促すのが明らかに誤りだから。
  */
 export type NextAction =
   | { kind: "review"; reviewCount: number; questionCount: number }
+  | { kind: "unanswered"; unansweredCount: number }
   | { kind: "create" };
 
 export type DashboardInput = {
@@ -62,13 +68,26 @@ export class Dashboard {
    * それ以上を解きたい場合は /review で問数を選ぶ。
    */
   get nextAction(): NextAction {
-    if (!this.summary.needsReview) return { kind: "create" };
+    if (this.summary.needsReview) {
+      return {
+        kind: "review",
+        reviewCount: this.summary.reviewCount,
+        questionCount: Math.min(
+          DASHBOARD_REVIEW_SIZE,
+          this.summary.reviewCount,
+        ),
+      };
+    }
 
-    return {
-      kind: "review",
-      reviewCount: this.summary.reviewCount,
-      questionCount: Math.min(DASHBOARD_REVIEW_SIZE, this.summary.reviewCount),
-    };
+    // 手を付けていない問題が残っているうちは、新しく作らせない
+    if (this.summary.hasUnanswered) {
+      return {
+        kind: "unanswered",
+        unansweredCount: this.summary.unansweredCount,
+      };
+    }
+
+    return { kind: "create" };
   }
 
   /**
